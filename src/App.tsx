@@ -1,0 +1,79 @@
+import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useStore } from './store/useStore';
+import Navbar from './components/Navbar';
+import HomePage from './components/HomePage';
+import MoviesPage from './components/MoviesPage';
+import SeriesPage from './components/SeriesPage';
+import SearchPage from './components/SearchPage';
+import GenresPage from './components/GenresPage';
+import MediaModal from './components/MediaModal';
+import VideoPlayer from './components/VideoPlayer';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const AppContent: React.FC = () => {
+  const { activeTab } = useStore();
+
+  const pages = {
+    home: <HomePage />,
+    movies: <MoviesPage />,
+    series: <SeriesPage />,
+    search: <SearchPage />,
+    genres: <GenresPage />,
+  };
+
+  return (
+    <div className="relative min-h-screen bg-[#050508] text-white" style={{ fontFamily: 'Outfit, Inter, sans-serif' }}>
+      {/* Ambient Background Glow — Premium Red */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[700px] h-[700px] bg-red-600/10 rounded-full blur-[140px] animate-float" style={{ animationDuration: '12s' }} />
+        <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-rose-600/8 rounded-full blur-[120px] animate-float" style={{ animationDuration: '15s' }} />
+        <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-red-900/10 rounded-full blur-[140px] animate-float" style={{ animationDuration: '18s' }} />
+      </div>
+
+      {/* Navbar */}
+      <Navbar />
+
+      {/* Page Content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        >
+          {pages[activeTab]}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Global Overlays */}
+      <MediaModal />
+      <VideoPlayer />
+
+      {/* Bottom Gradient Footer */}
+      <div className="fixed bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-400 opacity-40" />
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
+};
+
+export default App;
