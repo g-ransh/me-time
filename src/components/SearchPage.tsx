@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, Sparkles } from 'lucide-react';
+import { Search, TrendingUp, Sparkles, X, Filter, Tv, Film } from 'lucide-react';
 import { Movie } from '../types';
 import { searchMulti, getTrending } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
 import MediaCard from './MediaCard';
+
+const CATEGORIES = ['Oppenheimer', 'The Last of Us', 'Dune', 'Breaking Bad', 'Inception', 'Interstellar', 'Succession', 'The Boys'];
 
 const SearchPage: React.FC = () => {
   const { searchQuery, setSearchQuery } = useStore();
@@ -13,12 +15,12 @@ const SearchPage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv'>('all');
   const [trending, setTrending] = useState<Movie[]>([]);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (inputRef.current) inputRef.current.focus();
-    // Load trending for featured section
     getTrending('all', 'week').then(data => {
       setTrending(data.results.slice(0, 12));
     }).catch(() => {});
@@ -26,6 +28,7 @@ const SearchPage: React.FC = () => {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    
     if (!searchQuery || searchQuery.length < 2) {
       setResults([]);
       setHasSearched(false);
@@ -39,7 +42,8 @@ const SearchPage: React.FC = () => {
         const filtered = data.results.filter(r => r.media_type !== 'person');
         setResults(filtered);
         setHasSearched(true);
-      } catch {
+      } catch (err) {
+        console.error("Search failed", err);
         setResults([]);
       } finally {
         setLoading(false);
@@ -52,183 +56,149 @@ const SearchPage: React.FC = () => {
     : results.filter(r => r.media_type === filter);
 
   return (
-    <div className="min-h-screen pt-28 px-6 md:px-10 pb-20">
-      {/* Hero Search Section */}
+    <div className="min-h-screen pt-32 px-6 md:px-12 pb-24 max-w-[1600px] mx-auto">
+      
+      {/* Search Hero Area */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="max-w-3xl mx-auto mb-16 text-center"
+        className="max-w-4xl mx-auto mb-20 text-center"
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <h1 className="text-5xl md:text-6xl font-black gradient-text tracking-tight mb-3">
-            Search
-          </h1>
-          <p className="text-white/40 text-base">Discover movies, series, and more</p>
-        </motion.div>
+        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6">
+          Find your next obsession.
+        </h1>
 
-        {/* Search Input */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="liquid-glass-strong rounded-full flex items-center gap-3 px-6 py-4 shadow-2xl shadow-red-900/10"
+          className="liquid-glass-strong rounded-full flex items-center gap-4 px-8 py-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 focus-within:border-white/30 transition-all group"
         >
-          <Search size={20} className="text-red-400 flex-shrink-0" />
+          <Search size={28} className="text-white/40 group-focus-within:text-white transition-colors" />
           <input
             ref={inputRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for movies, series..."
-            className="bg-transparent text-white placeholder-white/30 text-base outline-none flex-1"
+            placeholder="Movies, Series, or Keywords..."
+            className="bg-transparent text-white placeholder-white/30 text-xl md:text-2xl outline-none flex-1 font-medium"
           />
           {searchQuery && (
             <motion.button
               onClick={() => setSearchQuery('')}
-              className="liquid-glass px-3 py-1.5 rounded-full text-xs text-white/60 hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 rounded-full liquid-glass flex items-center justify-center text-white/60 hover:text-white"
             >
-              Clear
+              <X size={20} />
             </motion.button>
           )}
         </motion.div>
       </motion.div>
 
-      {/* Results or Featured */}
-      {!hasSearched ? (
-        <>
-          {/* Featured Trending */}
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="mb-16"
+      {/* Conditional Content */}
+      <AnimatePresence mode="wait">
+        {!hasSearched ? (
+          <motion.div
+            key="featured"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
-                  <TrendingUp size={18} className="text-white" />
+            {/* Trending Section */}
+            <section className="mb-20">
+              <div className="flex items-center gap-4 mb-10 px-6 md:px-10">
+                <div className="w-14 h-14 rounded-3xl liquid-glass flex items-center justify-center border border-white/10">
+                  <TrendingUp size={24} className="text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Trending Now</h2>
-                  <p className="text-white/40 text-sm">What everyone is watching</p>
+                  <h2 className="text-3xl font-black text-white">Trending Now</h2>
+                  <p className="text-white/50 text-sm font-medium">The most popular titles this week</p>
                 </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {trending.map((movie, i) => (
-                <MediaCard key={movie.id} movie={movie} index={i} size="md" />
-              ))}
-            </div>
-          </motion.section>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
+                {trending.map((movie, i) => (
+                  <MediaCard key={movie.id} movie={movie} index={i} size="md" />
+                ))}
+              </div>
+            </section>
 
-          {/* Quick Categories */}
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-500/30">
-                <Sparkles size={18} className="text-white" />
+            {/* Quick Categories */}
+            <section className="px-6 md:px-10">
+              <div className="flex items-center gap-4 mb-10">
+                <div className="w-14 h-14 rounded-3xl liquid-glass flex items-center justify-center border border-white/10">
+                  <Sparkles size={24} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black text-white">Quick Categories</h2>
+                  <p className="text-white/50 text-sm font-medium">Jump straight into the action</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">Popular Searches</h2>
-                <p className="text-white/40 text-sm">Jump into trending content</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {CATEGORIES.map((term, i) => (
+                  <motion.button
+                    key={term}
+                    onClick={() => setSearchQuery(term)}
+                    className="liquid-glass px-6 py-6 rounded-3xl text-white/80 text-base font-bold text-left hover:text-white transition-all border border-white/5 hover:border-white/20"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {term}
+                  </motion.button>
+                ))}
               </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {['Oppenheimer', 'The Last of Us', 'Breaking Bad', 'Inception', 'Dune', 'Game of Thrones', 'Interstellar', 'Succession'].map((term, i) => (
-                <motion.button
-                  key={term}
-                  onClick={() => setSearchQuery(term)}
-                  className="liquid-glass px-5 py-4 rounded-2xl text-white/80 text-sm font-medium hover:text-white text-left transition-all"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + i * 0.05 }}
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {term}
-                </motion.button>
-              ))}
-            </div>
-          </motion.section>
-        </>
-      ) : (
-        <>
-          {/* Filters */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-8 flex-wrap gap-3"
-          >
-            <p className="text-white/50 text-sm">
-              {loading ? 'Searching...' : `${displayResults.length} results for "${searchQuery}"`}
-            </p>
-            <div className="liquid-glass rounded-full p-1 flex">
-              {(['all', 'movie', 'tv'] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-5 py-2 rounded-full text-xs font-medium transition-all ${
-                    filter === f ? 'btn-primary text-white' : 'text-white/50 hover:text-white/70'
-                  }`}
-                >
-                  {f === 'all' ? 'All' : f === 'movie' ? 'Movies' : 'Series'}
-                </button>
-              ))}
-            </div>
+            </section>
           </motion.div>
-
-          {/* Loading */}
-          {loading && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="h-72 rounded-3xl animate-shimmer" />
-              ))}
+        ) : (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {/* Filter Controls */}
+            <div className="flex items-center justify-between mb-10 px-6 md:px-10">
+              <p className="text-white/50 text-lg font-medium">
+                {loading ? 'Searching...' : `Found ${displayResults.length} matches`}
+              </p>
+              
+              <div className="liquid-glass-strong rounded-full p-1.5 flex gap-1 shadow-lg">
+                {[
+                  { id: 'all', icon: null },
+                  { id: 'movie', icon: Film },
+                  { id: 'tv', icon: Tv }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFilter(f.id as any)}
+                    className={`px-6 py-3 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                      filter === f.id ? 'btn-primary text-white shadow-lg' : 'text-white/50 hover:text-white'
+                    }`}
+                  >
+                    {f.icon && <f.icon size={14} />}
+                    {f.id === 'all' ? 'All Content' : f.id === 'movie' ? 'Movies' : 'Series'}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
 
-          {/* Results */}
-          {!loading && (
-            <AnimatePresence mode="wait">
-              {displayResults.length > 0 ? (
-                <motion.div
-                  key="results"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
-                >
-                  {displayResults.map((movie, i) => (
-                    <MediaCard key={movie.id} movie={movie} index={i} size="md" />
-                  ))}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-20"
-                >
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full liquid-glass flex items-center justify-center">
-                    <Search size={28} className="text-white/40" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white/60 mb-2">No results found</h3>
-                  <p className="text-white/30 text-sm">Try a different search term</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          )}
-        </>
-      )}
+            {/* Results Grid */}
+            {loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="w-full aspect-[2/3] rounded-2xl liquid-glass animate-pulse" />
+                ))}
+              </div>
+            ) : displayResults.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
+                {displayResults.map((movie, i) => (
+                  <MediaCard key={movie.id} movie={movie} index={i} size="lg" />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-32">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full liquid-glass flex items-center justify-center">
+                  <Search size={40} className="text-white/20" />
+                </div>
+                <h3 className="text-2xl font-black text-white/50">No results found for "{searchQuery}"</h3>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

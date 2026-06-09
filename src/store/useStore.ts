@@ -29,7 +29,7 @@ interface AppState {
   isInWatchlist: (id: number) => boolean;
 
   // Active Tab
-  activeTab: 'home' | 'movies' | 'series' | 'search' | 'genres';
+  activeTab: 'home' | 'movies' | 'series' | 'genres' | 'search' | 'list';
   setActiveTab: (tab: 'home' | 'movies' | 'series' | 'search' | 'genres') => void;
 
   // Player

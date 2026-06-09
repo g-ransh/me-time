@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Info, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Plus, Info, Star, Check, Clock, MessageCircle, Calendar } from 'lucide-react';
 import { Movie } from '../types';
 import { getBackdropUrl, getTitle, getReleaseYear } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
@@ -13,20 +13,35 @@ const GENRE_MAP: Record<number, string> = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
   80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
   14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
-  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
-  53: 'Thriller', 10752: 'War', 37: 'Western',
+  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 53: 'Thriller',
+};
+
+// Helper to format runtime (minutes -> "1h 48m")
+const formatRuntime = (minutes?: number) => {
+  if (!minutes) return null;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
 };
 
 const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const { setSelectedMedia, setIsModalOpen, addToWatchlist, isInWatchlist, setPlayerMedia, setIsPlayerOpen } = useStore();
+  const { 
+    setSelectedMedia, 
+    setIsModalOpen, 
+    addToWatchlist, 
+    removeFromWatchlist, 
+    isInWatchlist, 
+    setPlayerMedia, 
+    setIsPlayerOpen 
+  } = useStore();
 
   const featured = movies.slice(0, 5);
   const current = featured[currentIndex];
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || !featured.length) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % featured.length);
     }, 6000);
@@ -39,189 +54,138 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
-  const prev = () => goTo((currentIndex - 1 + featured.length) % featured.length);
-  const next = () => goTo((currentIndex + 1) % featured.length);
-
   if (!current) return null;
 
   const genres = current.genre_ids?.slice(0, 3).map((id) => GENRE_MAP[id]).filter(Boolean) || [];
   const inWatchlist = isInWatchlist(current.id);
+  const rating = current.vote_average ? current.vote_average.toFixed(1) : 'N/A';
+  const voteCount = current.vote_count ? current.vote_count.toLocaleString() : '0';
+  const runtimeFormatted = formatRuntime(current.runtime); // runtime might be missing in list endpoints
+
+  const handleWatchlistToggle = () => {
+    if (inWatchlist) {
+      removeFromWatchlist(current.id);
+    } else {
+      addToWatchlist(current);
+    }
+  };
 
   return (
-    <div className="relative h-screen min-h-[700px] max-h-[920px] w-full overflow-hidden">
-      {/* Background Images */}
-      <AnimatePresence mode="sync">
+    <div className="relative w-full h-[85vh] min-h-[600px] overflow-hidden select-none bg-black">
+      {/* Background Images with Smooth Transitions */}
+      <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
           className="absolute inset-0"
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
         >
           <img
             src={getBackdropUrl(current.backdrop_path)}
             alt={getTitle(current)}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
           />
-          {/* Multi-layer gradient overlays */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050508] via-[#050508]/70 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-transparent to-[#050508]/40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#050508]" />
+          {/* Premium Overlay Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-16 lg:px-24 pt-24">
+      {/* Hero Content */}
+      <div className="relative z-20 w-full h-full max-w-7xl mx-auto flex flex-col justify-end pb-24 px-8 md:px-12">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-            className="max-w-2xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="max-w-3xl"
           >
-            {/* Metadata Pills */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex items-center gap-2 mb-5"
-            >
-              <div className="liquid-glass px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                <Star size={11} className="text-amber-400 fill-amber-400" />
-                <span className="text-xs font-semibold text-white/90">{current.vote_average.toFixed(1)}</span>
+            {/* ===== SHUTTLETV STRIP METADATA ===== */}
+            <div className="flex items-center gap-3 mb-6 text-sm font-medium tracking-wide text-white">
+              {/* Rating */}
+              <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-xs font-bold">
+                <Star size={12} className="fill-amber-400 text-amber-400" />
+                <span>{rating}/10</span>
               </div>
-              <div className="liquid-glass px-3 py-1.5 rounded-full">
-                <span className="text-xs font-medium text-white/70">{getReleaseYear(current)}</span>
+
+              {/* Year */}
+              <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-xs font-bold">
+                <Calendar size={12} className="text-white/60" />
+                <span>{getReleaseYear(current)}</span>
               </div>
-              {genres[0] && (
-                <div className="liquid-glass px-3 py-1.5 rounded-full">
-                  <span className="text-xs font-medium text-white/70">{genres[0]}</span>
+
+              {/* Runtime */}
+              {runtimeFormatted && (
+                <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-xs font-bold">
+                  <span>{runtimeFormatted}</span>
                 </div>
               )}
-            </motion.div>
+            </div>
 
             {/* Title */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-black text-shadow leading-tight mb-4"
-              style={{ fontFamily: 'Outfit, sans-serif' }}
-            >
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-white mb-5 uppercase">
               {getTitle(current)}
-            </motion.h1>
+            </h1>
 
-            {/* Overview */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-white/60 text-base md:text-lg leading-relaxed mb-10 line-clamp-3 text-shadow-sm max-w-xl"
-            >
+            {/* Synopsis */}
+            <p className="text-white/70 text-base md:text-lg line-clamp-3 mb-6 max-w-xl">
               {current.overview}
-            </motion.p>
+            </p>
 
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex items-center gap-3 flex-wrap"
-            >
-              <motion.button
+            {/* ShuttleTV Low-Profile Minimal Buttons */}
+            <div className="flex items-center gap-3">
+              <button
                 onClick={() => {
                   setPlayerMedia({ id: current.id, type: current.media_type === 'tv' ? 'tv' : 'movie' });
                   setIsPlayerOpen(true);
                 }}
-                className="btn-primary px-7 py-3.5 rounded-full font-semibold flex items-center gap-2.5 text-white"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                className="bg-black/50 hover:bg-white text-white hover:text-black border border-white/20 transition-all px-6 py-2 rounded-full font-bold text-xs flex items-center gap-2 tracking-wider uppercase"
               >
-                <Play size={18} fill="white" />
-                Watch
-              </motion.button>
+                <Play size={12} className="fill-current" /> Play
+              </button>
 
-              <motion.button
-                onClick={() => {
-                  setSelectedMedia(current);
-                  setIsModalOpen(true);
-                }}
-                className="liquid-glass px-7 py-3.5 rounded-full font-semibold flex items-center gap-2.5 text-white"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <Info size={16} />
-                Details
-              </motion.button>
-
-              <motion.button
-                onClick={() => inWatchlist ? useStore.getState().removeFromWatchlist(current.id) : addToWatchlist(current)}
-                className={`liquid-glass w-12 h-12 rounded-full flex items-center justify-center ${inWatchlist ? 'text-red-400' : 'text-white'}`}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-              >
-                <Plus size={18} className={inWatchlist ? 'rotate-45' : ''} style={{ transition: 'transform 0.3s' }} />
-              </motion.button>
-            </motion.div>
+              <div className="flex items-center bg-black/50 border border-white/20 rounded-full overflow-hidden p-0.5">
+                <button
+                  onClick={() => {
+                    setSelectedMedia(current);
+                    setIsModalOpen(true);
+                  }}
+                  className="p-2 text-white/70 hover:text-white transition-colors"
+                  title="More Info"
+                >
+                  <Info size={14} />
+                </button>
+                <div className="w-px h-3 bg-white/20" />
+                <button
+                  onClick={handleWatchlistToggle}
+                  className={`p-2 transition-colors ${inWatchlist ? 'text-white' : 'text-white/70 hover:text-white'}`}
+                  title="Watchlist"
+                >
+                  {inWatchlist ? <Check size={14} /> : <Plus size={14} />}
+                </button>
+              </div>
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Pagination Dots */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+      {/* Centered Pagination Indicators */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
         {featured.map((_, i) => (
-          <motion.button
+          <button
             key={i}
             onClick={() => goTo(i)}
             className={`rounded-full transition-all duration-300 ${
-              i === currentIndex
-                ? 'w-8 h-2 bg-white'
-                : 'w-2 h-2 bg-white/30 hover:bg-white/50'
+              i === currentIndex 
+                ? 'w-6 h-1.5 bg-white' 
+                : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/50'
             }`}
-            whileHover={{ scale: 1.2 }}
+            aria-label={`Go to slide ${i + 1}`}
           />
-        ))}
-      </div>
-
-      {/* Arrow Navigation */}
-      <motion.button
-        onClick={prev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 liquid-glass w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:text-white"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <ChevronLeft size={20} />
-      </motion.button>
-
-      <motion.button
-        onClick={next}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 liquid-glass w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:text-white"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <ChevronRight size={20} />
-      </motion.button>
-
-      {/* Thumbnail Preview Strip */}
-      <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col gap-3">
-        {featured.map((movie, i) => (
-          <motion.button
-            key={movie.id}
-            onClick={() => goTo(i)}
-            className={`relative w-20 h-12 rounded-2xl overflow-hidden transition-all duration-300 ${
-              i === currentIndex ? 'ring-2 ring-red-400 opacity-100 scale-110' : 'opacity-40 hover:opacity-70'
-            }`}
-            whileHover={{ scale: i === currentIndex ? 1.1 : 1.05 }}
-          >
-            <img
-              src={getBackdropUrl(movie.backdrop_path)}
-              alt={getTitle(movie)}
-              className="w-full h-full object-cover"
-            />
-          </motion.button>
         ))}
       </div>
     </div>

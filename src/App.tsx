@@ -14,8 +14,8 @@ import VideoPlayer from './components/VideoPlayer';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       retry: 2,
       refetchOnWindowFocus: false,
     },
@@ -34,12 +34,41 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050508] text-white" style={{ fontFamily: 'Outfit, Inter, sans-serif' }}>
-      {/* Ambient Background Glow — Premium Red */}
+    <div
+      className="relative min-h-screen text-white"
+      style={{ fontFamily: 'Outfit, Inter, sans-serif', background: '#0a0a0a' }}
+    >
+      {/* ── Ambient Glow — Warm Amber (ShuttleTV style) ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-[700px] h-[700px] bg-red-600/10 rounded-full blur-[140px] animate-float" style={{ animationDuration: '12s' }} />
-        <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-rose-600/8 rounded-full blur-[120px] animate-float" style={{ animationDuration: '15s' }} />
-        <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-red-900/10 rounded-full blur-[140px] animate-float" style={{ animationDuration: '18s' }} />
+        {/* Top-left amber blob */}
+        <div
+          className="absolute -top-60 -left-60 w-[800px] h-[800px] rounded-full animate-float"
+          style={{
+            background: 'radial-gradient(circle, rgba(180,90,0,0.18) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+            animationDuration: '14s',
+          }}
+        />
+        {/* Mid-right warm glow */}
+        <div
+          className="absolute top-1/4 -right-60 w-[700px] h-[700px] rounded-full animate-float"
+          style={{
+            background: 'radial-gradient(circle, rgba(150,70,0,0.12) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+            animationDuration: '18s',
+            animationDelay: '-6s',
+          }}
+        />
+        {/* Bottom subtle warm */}
+        <div
+          className="absolute -bottom-60 left-1/3 w-[700px] h-[700px] rounded-full animate-float"
+          style={{
+            background: 'radial-gradient(circle, rgba(120,55,0,0.10) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+            animationDuration: '20s',
+            animationDelay: '-10s',
+          }}
+        />
       </div>
 
       {/* Navbar */}
@@ -49,10 +78,10 @@ const AppContent: React.FC = () => {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
         >
           {pages[activeTab]}
         </motion.div>
@@ -62,18 +91,19 @@ const AppContent: React.FC = () => {
       <MediaModal />
       <VideoPlayer />
 
-      {/* Bottom Gradient Footer */}
-      <div className="fixed bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-400 opacity-40" />
+      {/* Bottom accent line */}
+      <div
+        className="fixed bottom-0 left-0 right-0 h-px opacity-30"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.6), transparent)' }}
+      />
     </div>
   );
 };
 
-const App: React.FC = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
-  );
-};
+const App: React.FC = () => (
+  <QueryClientProvider client={queryClient}>
+    <AppContent />
+  </QueryClientProvider>
+);
 
 export default App;
