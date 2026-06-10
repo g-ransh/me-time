@@ -6,8 +6,6 @@ import { searchMulti, getTrending } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
 import MediaCard from './MediaCard';
 
-const CATEGORIES = ['Oppenheimer', 'The Last of Us', 'Dune', 'Breaking Bad', 'Inception', 'Interstellar', 'Succession', 'The Boys'];
-
 const SearchPage: React.FC = () => {
   const { searchQuery, setSearchQuery } = useStore();
   const [results, setResults] = useState<Movie[]>([]);
@@ -56,36 +54,42 @@ const SearchPage: React.FC = () => {
     : results.filter(r => r.media_type === filter);
 
   return (
-    <div className="min-h-screen pt-32 px-6 md:px-12 pb-24 max-w-[1600px] mx-auto">
+    <div className="relative min-h-screen w-full bg-[#050507] overflow-x-hidden text-white antialiased flex flex-col justify-start pt-40 px-6 md:px-12 pb-24 select-none">
       
       {/* Search Hero Area */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto mb-20 text-center"
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 max-w-2xl mx-auto mb-8 text-center flex flex-col items-center"
       >
-        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6">
-          Find your next obsession.
+        <h1 className="text-3xl md:text-[40px] font-bold text-white tracking-normal mb-6">
+          What's your next obsession?
         </h1>
 
         <motion.div
-          className="liquid-glass-strong rounded-full flex items-center gap-4 px-8 py-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 focus-within:border-white/30 transition-all group"
+          className="w-full max-w-xl rounded-full flex items-center gap-3 px-5 py-3 transition-all group"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.02), 0 20px 40px -10px rgba(0, 0, 0, 0.5)'
+          }}
         >
-          <Search size={28} className="text-white/40 group-focus-within:text-white transition-colors" />
+          <Search size={16} className="text-white/30 group-focus-within:text-white/70 transition-colors shrink-0" />
           <input
             ref={inputRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Movies, Series, or Keywords..."
-            className="bg-transparent text-white placeholder-white/30 text-xl md:text-2xl outline-none flex-1 font-medium"
+            placeholder="Search for movies & TV shows..."
+            className="bg-transparent text-white/90 placeholder-white/20 text-sm outline-none flex-1 font-medium tracking-normal"
           />
           {searchQuery && (
-            <motion.button
+            <button
               onClick={() => setSearchQuery('')}
-              className="w-10 h-10 rounded-full liquid-glass flex items-center justify-center text-white/60 hover:text-white"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-white/70 transition-colors"
             >
-              <X size={20} />
-            </motion.button>
+              <X size={14} />
+            </button>
           )}
         </motion.div>
       </motion.div>
@@ -94,54 +98,62 @@ const SearchPage: React.FC = () => {
       <AnimatePresence mode="wait">
         {!hasSearched ? (
           <motion.div
-            key="featured"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            key="qol-dashboard"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
+            className="relative z-10 max-w-4xl mx-auto px-4"
           >
-            {/* Trending Section */}
-            <section className="mb-20">
-              <div className="flex items-center gap-4 mb-10 px-6 md:px-10">
-                <div className="w-14 h-14 rounded-3xl liquid-glass flex items-center justify-center border border-white/10">
-                  <TrendingUp size={24} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-black text-white">Trending Now</h2>
-                  <p className="text-white/50 text-sm font-medium">The most popular titles this week</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
-                {trending.map((movie, i) => (
-                  <MediaCard key={movie.id} movie={movie} index={i} size="md" />
-                ))}
-              </div>
-            </section>
+            {/* QoL Quick Navigation Hub */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+              {[
+                { label: 'Continue Watching', desc: 'Pick up right where you left off', icon: '🍿', action: 'home' },
+                { label: 'Your Watchlist', desc: 'Jump to your curated shelf', icon: '✨', action: 'list' },
+                { label: 'Surprise Selection', desc: 'Let the system pick for you', icon: '🎲', action: 'genres' }
+              ].map((hub) => (
+                <button
+                  key={hub.label}
+                  onClick={() => {
+                    // Update active tab context securely via store state 
+                    useStore.setState({ activeTab: hub.action as any });
+                  }}
+                  className="flex flex-col text-left p-5 rounded-2xl bg-white/0.02 border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all cursor-pointer group"
+                >
+                  <span className="text-2xl mb-3 block group-hover:scale-110 transition-transform w-fit">{hub.icon}</span>
+                  <h3 className="text-sm font-bold text-white/90 mb-1">{hub.label}</h3>
+                  <p className="text-white/40 text-xs font-medium leading-normal">{hub.desc}</p>
+                </button>
+              ))}
+            </div>
 
-            {/* Quick Categories */}
-            <section className="px-6 md:px-10">
-              <div className="flex items-center gap-4 mb-10">
-                <div className="w-14 h-14 rounded-3xl liquid-glass flex items-center justify-center border border-white/10">
-                  <Sparkles size={24} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-black text-white">Quick Categories</h2>
-                  <p className="text-white/50 text-sm font-medium">Jump straight into the action</p>
-                </div>
+            {/* Premium Recent Searches / History Tracking Pill Bar */}
+            <div className="border-t border-white/5 pt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white/30">Recent Searches</h3>
+                <button 
+                  onClick={() => useStore.setState({ searchQuery: '' })}
+                  className="text-[11px] font-bold text-white/40 hover:text-white/80 transition-colors cursor-pointer"
+                >
+                  Clear History
+                </button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {CATEGORIES.map((term, i) => (
-                  <motion.button
+              
+              <div className="flex flex-wrap gap-2">
+                {['Spider-Man', 'Batman', 'Sci-Fi Thrillers', 'Anime 2026'].map((term) => (
+                  <button
                     key={term}
                     onClick={() => setSearchQuery(term)}
-                    className="liquid-glass px-6 py-6 rounded-3xl text-white/80 text-base font-bold text-left hover:text-white transition-all border border-white/5 hover:border-white/20"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    className="px-4 py-2 rounded-full text-xs font-semibold text-white/70 hover:text-white transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.05)'
+                    }}
                   >
                     {term}
-                  </motion.button>
+                  </button>
                 ))}
               </div>
-            </section>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -149,37 +161,18 @@ const SearchPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            {/* Filter Controls */}
-            <div className="flex items-center justify-between mb-10 px-6 md:px-10">
-              <p className="text-white/50 text-lg font-medium">
-                {loading ? 'Searching...' : `Found ${displayResults.length} matches`}
+            {/* Low-profile Item Counter */}
+            <div className="mb-8 px-6 md:px-10">
+              <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">
+                {loading ? 'Scanning server database...' : `Discovered ${displayResults.length} matches`}
               </p>
-              
-              <div className="liquid-glass-strong rounded-full p-1.5 flex gap-1 shadow-lg">
-                {[
-                  { id: 'all', icon: null },
-                  { id: 'movie', icon: Film },
-                  { id: 'tv', icon: Tv }
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFilter(f.id as any)}
-                    className={`px-6 py-3 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
-                      filter === f.id ? 'btn-primary text-white shadow-lg' : 'text-white/50 hover:text-white'
-                    }`}
-                  >
-                    {f.icon && <f.icon size={14} />}
-                    {f.id === 'all' ? 'All Content' : f.id === 'movie' ? 'Movies' : 'Series'}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Results Grid */}
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} className="w-full aspect-[2/3] rounded-2xl liquid-glass animate-pulse" />
+                  <div key={i} className="w-full aspect-2/3 rounded-2xl liquid-glass animate-pulse" />
                 ))}
               </div>
             ) : displayResults.length > 0 ? (
@@ -190,8 +183,8 @@ const SearchPage: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-32">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full liquid-glass flex items-center justify-center">
-                  <Search size={40} className="text-white/20" />
+                <div className="w-12 h-12 mx-auto mb-6 rounded-full liquid-glass flex items-center justify-center">
+                  <Search size={20} className="text-white/20" />
                 </div>
                 <h3 className="text-2xl font-black text-white/50">No results found for "{searchQuery}"</h3>
               </div>

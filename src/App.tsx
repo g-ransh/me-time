@@ -29,8 +29,9 @@ const AppContent: React.FC = () => {
     home: <HomePage />,
     movies: <MoviesPage />,
     series: <SeriesPage />,
-    search: <SearchPage />,
     genres: <GenresPage />,
+    search: <SearchPage />,
+    list: <div className="pt-32 text-center">Your Curated List Canvas</div> // Swap with <WatchlistPage /> later
   };
 
   return (
@@ -38,7 +39,7 @@ const AppContent: React.FC = () => {
       className="relative min-h-screen text-white"
       style={{ fontFamily: 'Outfit, Inter, sans-serif', background: '#0a0a0a' }}
     >
-      {/* ── Ambient Glow — Warm Amber (ShuttleTV style) ── */}
+      {/* ── Ambient Glow — Warm Amber ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Top-left amber blob */}
         <div
@@ -107,3 +108,26 @@ const App: React.FC = () => (
 );
 
 export default App;
+
+<div className="relative min-h-screen bg-[#050507] overflow-x-hidden text-white antialiased selection:bg-white/10">
+      
+      {/* ── Premium High-Contrast Liquid Ambient Glow Blobs ── */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-[600px] pointer-events-none select-none z-0 overflow-hidden opacity-45 mix-blend-screen">
+        {/* Left Amber/Gold Refraction Layer */}
+        <div 
+          className="absolute -top-[20%] left-[-10%] w-[600px] h-[500px] rounded-full bg-linear-to-br from-amber-600/40 via-orange-500/20 to-transparent blur-[120px] animate-pulse"
+          style={{ animationDuration: '8s' }}
+        />
+        {/* Right Saturated Complementary Warm Accent */}
+        <div 
+          className="absolute -top-[15%] right-[-5%] w-[500px] h-[450px] rounded-full bg-linear-to-bl from-yellow-600/30 via-amber-500/10 to-transparent blur-[100px] animate-pulse"
+          style={{ animationDuration: '12s' }}
+        />
+      </div>
+
+      {/* Your Navbar and Active Page components render naturally underneath */}
+      <Navbar />
+      <main className="relative z-10">
+        {/* Page Content */}
+      </main>
+    </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Star } from 'lucide-react';
+import { Play, Plus, Star, Video, X } from 'lucide-react';
 import { Movie } from '../types';
 import { getPosterUrl, getTitle, getReleaseYear } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
@@ -87,8 +87,12 @@ const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = 'md', sh
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => {
-        setSelectedMedia(movie);
-        setIsModalOpen(true);
+        if (mediaType === 'tv') {
+          setShowDetails(true);
+        } else {
+          setSelectedMedia(movie);
+          setIsModalOpen(true);
+        }
       }}
     >
       {/* Background Rank Marker */}
@@ -205,152 +209,130 @@ const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = 'md', sh
       {/* ── Premium ShuttleTV Expanded Detail Section (Conditional Sheet Injection via Portal) ── */}
       <AnimatePresence>
         {showDetails && mediaType === 'tv' && createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 bg-black/60 backdrop-blur-md overflow-y-auto" onClick={() => setShowDetails(false)}>
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/85 backdrop-blur-md overflow-y-auto" 
+            onClick={() => setShowDetails(false)}
+          >
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 30 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-5xl rounded-3xl border border-white/10 bg-[#09090b]/95 backdrop-blur-3xl p-6 md:p-8 shadow-2xl text-left mx-auto my-auto max-h-[90vh] overflow-y-auto custom-scrollbar"
+              className="relative w-full max-w-5xl rounded-3xl border border-white/10 bg-[#070709] p-6 md:p-8 shadow-2xl text-left mx-auto my-auto max-h-[92vh] overflow-y-auto"
+              style={{
+                boxShadow: '0 30px 60px -15px rgba(0,0,0,0.9), inset 0 1px 0 0 rgba(255,255,255,0.1)'
+              }}
             >
-            {/* Main Details Grid */}
-            <div className="flex flex-col md:flex-row gap-8 items-start mb-6">
-              <div className="w-full md:w-56 aspect-2/3 rounded-2xl overflow-hidden border border-white/5 bg-white/5 shrink-0 shadow-lg">
-                <img src={getPosterUrl(movie.poster_path)} alt="" className="w-full h-full object-cover" />
-              </div>
-              
-              <div className="flex-1">
-                <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-2.5 tracking-tight">{title}</h2>
+              {/* Close Button Pin */}
+              <button 
+                onClick={() => setShowDetails(false)}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white text-xs cursor-pointer transition-colors z-50"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Main Details Grid Layout */}
+              <div className="flex flex-col md:flex-row gap-8 items-start mb-6">
+                <div className="w-full md:w-56 aspect-[2/3] rounded-2xl overflow-hidden border border-white/5 bg-white/5 shrink-0 shadow-lg">
+                  <img src={getPosterUrl(movie.poster_path)} alt="" className="w-full h-full object-cover" />
+                </div>
                 
-                {/* Meta Labels Ribbon */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-4 text-[11px] font-bold">
-                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-md">★ {movie.vote_average.toFixed(1)}/10</span>
-                  <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60">{year}</span>
-                  <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60">1 Season</span>
-                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md">TV-14</span>
-                  {genre && <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60">{genre}</span>}
-                </div>
-
-                <p className="text-white/50 text-xs md:text-sm leading-relaxed mb-6 max-w-2xl">{movie.overview}</p>
-                {/* ── Premium ShuttleTV Season Navigator & Episode Track List ── */}
-        {movie.media_type === 'tv' && (
-          <div className="mt-6 border-t border-white/5 pt-6">
-            
-            {/* Seasons Horizontal Navigation Strip */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-3">
-              {["Season 1", "Season 2", "Season 3", "Season 4"].map((season) => (
-                <button
-                  key={season}
-                  className="px-4 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer bg-white/10 border-white/20 text-white shadow-md"
-                >
-                  {season}
-                </button>
-              ))}
-            </div>
-
-            {/* Symmetrical Episode List */}
-            <div className="mt-4">
-              <h3 className="text-sm font-bold text-white/90 mb-3 tracking-wide">Episodes</h3>
-              <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
-                {[
-                  { id: 1, title: "Step into My Office", duration: "45m", airDate: "May 25", overview: "Ben Reilly, an aging and down-on-his-luck private investigator in 1930s New York, is forced to grapple with his past life as the city's one and only superhero." },
-                  { id: 2, title: "Tread Lightly", duration: "41m", airDate: "May 25", overview: "Tread Lightly — and down-on-his-luck private investigator in 1930s New York, is forced to grapple with his past life as and to." }
-                ].map((ep, idx) => (
-                  <div key={ep.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-xl border border-white/5 bg-white/0.01 hover:bg-white/0.03 transition-colors">
-                    <span className="text-xs font-bold text-white/20 w-4 text-center">{idx + 1}</span>
-                    <div className="w-full sm:w-32 aspect-video rounded-lg overflow-hidden border border-white/5 bg-white/5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-4 mb-0.5">
-                        <h4 className="text-xs font-bold text-white/90 truncate">{ep.title}</h4>
-                        <span className="text-[10px] font-semibold text-white/40">{ep.duration}</span>
-                      </div>
-                      <span className="text-[10px] font-medium text-white/30 block mb-1">{ep.airDate}</span>
-                      <p className="text-[11px] text-white/50 leading-relaxed line-clamp-2">{ep.overview}</p>
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl md:text-[32px] font-black text-white mb-2 tracking-tight">“{title}”</h2>
+                  
+                  {/* Meta Labels Ribbon */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4 text-[11px] font-bold tracking-wide">
+                    <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md">★ {movie.vote_average.toFixed(1)}/10</span>
+                    <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60">{year}</span>
+                    <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60">1 Season</span>
+                    <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-md uppercase">TV-14</span>
+                    {genre && <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-white/60">{genre}</span>}
                   </div>
-                ))}
-              </div>
-            </div>
 
-          </div>
-        )}
+                  <p className="text-white/60 text-xs md:text-sm leading-relaxed mb-6 max-w-3xl">{movie.overview}</p>
 
-                {/* Control Actions */}
-                <div className="flex items-center gap-2.5">
-                  <button 
-                    onClick={() => { setPlayerMedia({ id: movie.id, type: 'tv' }); setIsPlayerOpen(true); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-white text-black hover:bg-neutral-200 transition-colors cursor-pointer"
-                  >
-                    <Play size={12} className="fill-black text-black" />
-                    <span>Play S1 E1</span>
-                  </button>
-                  <button 
-                    onClick={() => inWatchlist ? removeFromWatchlist(movie.id) : addToWatchlist(movie)}
-                    className="px-4 py-2 rounded-full text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors cursor-pointer"
-                  >
-                    Watchlist
-                  </button>
-                  <button 
-                    onClick={() => setShowDetails(false)}
-                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white text-xs cursor-pointer ml-auto"
-                  >
-                    ✕
-                  </button>
+                  {/* Operational Interactive Action Bar */}
+                  <div className="flex items-center gap-2.5">
+                    <button 
+                      onClick={() => { setPlayerMedia({ id: movie.id, type: 'tv' }); setIsPlayerOpen(true); }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold bg-white text-black hover:bg-neutral-200 transition-colors cursor-pointer shadow-md"
+                    >
+                      <Play size={13} className="fill-black text-black" />
+                      <span>Play S1 E1</span>
+                    </button>
+                    <button 
+                      onClick={() => { setPlayerMedia({ id: movie.id, type: 'tv' }); setIsPlayerOpen(true); }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors cursor-pointer"
+                    >
+                      <Video size={13} className="text-white/70" />
+                      <span>Trailer</span>
+                    </button>
+                    <button 
+                      onClick={() => inWatchlist ? removeFromWatchlist(movie.id) : addToWatchlist(movie)}
+                      className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white text-sm transition-colors cursor-pointer"
+                    >
+                      {inWatchlist ? '✕' : '+'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Seasons Tab Slider Strip */}
-            <div className="border-t border-white/5 pt-5 mb-5">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {SEASONS.map((season) => (
-                  <button
-                    key={season}
-                    onClick={() => setActiveSeason(season)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
-                      activeSeason === season 
-                        ? 'bg-white/10 border-white/20 text-white shadow-md' 
-                        : 'bg-transparent border-transparent text-white/40 hover:text-white/70'
-                    }`}
-                  >
-                    {season}
-                  </button>
-                ))}
+              {/* ── Seasons Tab Strip Row ── */}
+              <div className="mt-6 border-t border-white/5 pt-5">
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+                  {SEASONS.map((season) => (
+                    <button
+                      key={season}
+                      onClick={() => setActiveSeason(season)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer whitespace-nowrap ${
+                        activeSeason === season 
+                          ? 'bg-white/10 border-white/20 text-white shadow-md' 
+                          : 'bg-transparent border-transparent text-white/35 hover:text-white/70'
+                      }`}
+                    >
+                      {season}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Symmetrical Track Layout List */}
-            <div>
-              <div className="flex items-center justify-between mb-3 pl-0.5">
-                <h3 className="text-sm font-bold text-white/90 tracking-wide">Episodes</h3>
-              </div>
-              <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1 scrollbar-hide">
-                {MOCK_EPISODES.map((ep, idx) => (
-                  <div 
-                    key={ep.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-xl border border-white/5 bg-white/0.01 hover:bg-white/0.03 transition-colors"
-                  >
-                    <span className="text-xs font-bold text-white/20 w-4 pl-1 text-center">{idx + 1}</span>
-                    
-                    {/* Media Card Video Poster Preview Wrapper */}
-                    <div className="w-full sm:w-32 aspect-video rounded-lg overflow-hidden border border-white/5 bg-white/5 shrink-0 relative">
-                      <img src={ep.thumb} alt="" className="w-full h-full object-cover opacity-70" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-4 mb-0.5">
-                        <h4 className="text-xs font-bold text-white/90 truncate">{ep.title}</h4>
-                        <span className="text-[10px] font-semibold text-white/40">{ep.duration}</span>
+              {/* ── Full Interactive Episode Track Grid ── */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-3.5 pl-0.5">
+                  <h3 className="text-sm font-bold text-white/90 tracking-wide">Episodes</h3>
+                </div>
+                
+                <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1 scrollbar-hide">
+                  {MOCK_EPISODES.map((ep, idx) => (
+                    <div 
+                      key={ep.id} 
+                      className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-3.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors group/ep"
+                    >
+                      {/* Dynamic Track Order Count */}
+                      <span className="text-xs font-bold text-white/20 w-4 pl-0.5 text-center shrink-0">{idx + 1}</span>
+                      
+                      {/* Image Preview Window */}
+                      <div className="w-full sm:w-36 aspect-video rounded-xl overflow-hidden border border-white/5 bg-white/5 shrink-0 relative shadow-inner">
+                        <img src={ep.thumb} alt="" className="w-full h-full object-cover opacity-65 group-hover/ep:opacity-85 transition-opacity" />
+                        <div className="absolute inset-0 bg-black/10" />
                       </div>
-                      <span className="text-[10px] font-medium text-white/30 block mb-1">{ep.airDate}</span>
-                      <p className="text-[11px] text-white/50 leading-relaxed truncate line-clamp-1">{ep.overview}</p>
+
+                      {/* Episode Metadata Context tracking */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-4 mb-0.5">
+                          <h4 className="text-xs md:text-sm font-bold text-white/95 truncate group-hover/ep:text-white transition-colors">{ep.title}</h4>
+                          <span className="text-[10px] font-bold text-white/40 whitespace-nowrap">{ep.duration}</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-white/30 block mb-1.5">{ep.airDate}</span>
+                        <p className="text-[11px] md:text-xs text-white/50 leading-relaxed line-clamp-2 md:line-clamp-1">{ep.overview}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </motion.div>
+
+            </motion.div>
           </div>,
           document.body
         )}

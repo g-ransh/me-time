@@ -104,23 +104,32 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="max-w-3xl"
           >
-            {/* ===== SHUTTLETV STRIP METADATA ===== */}
+            {/* Strip Metadata */}
             <div className="flex items-center gap-3 mb-6 text-sm font-medium tracking-wide text-white">
               {/* Rating */}
-              <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-xs font-bold">
-                <Star size={12} className="fill-amber-400 text-amber-400" />
+              <div 
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+              >
+                <Star size={11} className="fill-amber-400 text-amber-400" />
                 <span>{rating}/10</span>
               </div>
 
               {/* Year */}
-              <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-xs font-bold">
-                <Calendar size={12} className="text-white/60" />
+              <div 
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+              >
+                <Calendar size={11} className="text-white/50" />
                 <span>{getReleaseYear(current)}</span>
               </div>
 
               {/* Runtime */}
               {runtimeFormatted && (
-                <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-md text-xs font-bold">
+                <div 
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                >
                   <span>{runtimeFormatted}</span>
                 </div>
               )}
@@ -136,38 +145,56 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
               {current.overview}
             </p>
 
-            {/* ShuttleTV Low-Profile Minimal Buttons */}
-            <div className="flex items-center gap-3">
+            {/* ShuttleTV Premium Liquid Glass Action Controls */}
+            <div className="flex items-center gap-3 relative z-30">
+              {/* Primary Play Button */}
               <button
                 onClick={() => {
                   setPlayerMedia({ id: current.id, type: current.media_type === 'tv' ? 'tv' : 'movie' });
                   setIsPlayerOpen(true);
                 }}
-                className="bg-black/50 hover:bg-white text-white hover:text-black border border-white/20 transition-all px-6 py-2 rounded-full font-bold text-xs flex items-center gap-2 tracking-wider uppercase"
+                className="px-7 py-3 rounded-full font-bold text-xs tracking-wider uppercase flex items-center gap-2 text-black bg-white hover:bg-neutral-200 transition-all cursor-pointer transform active:scale-95 shadow-lg"
               >
-                <Play size={12} className="fill-current" /> Play
+                <Play size={12} className="fill-current text-black" />
+                <span>Play</span>
               </button>
 
-              <div className="flex items-center bg-black/50 border border-white/20 rounded-full overflow-hidden p-0.5">
-                <button
-                  onClick={() => {
-                    setSelectedMedia(current);
-                    setIsModalOpen(true);
-                  }}
-                  className="p-2 text-white/70 hover:text-white transition-colors"
-                  title="More Info"
-                >
-                  <Info size={14} />
-                </button>
-                <div className="w-px h-3 bg-white/20" />
-                <button
-                  onClick={handleWatchlistToggle}
-                  className={`p-2 transition-colors ${inWatchlist ? 'text-white' : 'text-white/70 hover:text-white'}`}
-                  title="Watchlist"
-                >
-                  {inWatchlist ? <Check size={14} /> : <Plus size={14} />}
-                </button>
-              </div>
+              {/* Scaled-Up Glassmorphic Info/Details Button */}
+              <button
+                onClick={() => {
+                  setSelectedMedia(current);
+                  setIsModalOpen(true);
+                }}
+                className="px-6 py-3 rounded-full font-bold text-xs tracking-wider uppercase flex items-center gap-2 text-white border border-white/10 hover:border-white/20 transition-all cursor-pointer transform active:scale-95 shadow-md"
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                  backdropFilter: 'blur(16px)', 
+                  WebkitBackdropFilter: 'blur(16px)',
+                  boxShadow: 'inset 0 1px 1px 0 rgba(255,255,255,0.1)'
+                }}
+              >
+                <Info size={13} className="text-white/70" />
+                <span>More Info</span>
+              </button>
+
+              {/* Standalone Balanced Watchlist Button */}
+              <button
+                onClick={handleWatchlistToggle}
+                className="w-[42px] h-[42px] rounded-full border border-white/10 flex items-center justify-center transition-all cursor-pointer transform active:scale-95 shadow-md group"
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                  backdropFilter: 'blur(16px)', 
+                  WebkitBackdropFilter: 'blur(16px)',
+                  boxShadow: 'inset 0 1px 1px 0 rgba(255,255,255,0.1)'
+                }}
+                title="Watchlist"
+              >
+                {inWatchlist ? (
+                  <Check size={16} className="text-amber-400" />
+                ) : (
+                  <Plus size={16} className="text-white/60 group-hover:text-white transition-colors" />
+                )}
+              </button>
             </div>
           </motion.div>
         </AnimatePresence>

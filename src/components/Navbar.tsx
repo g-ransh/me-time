@@ -219,10 +219,15 @@ const Navbar: React.FC = () => {
                 ) : (
                   <motion.button
                     key="icon"
-                    onClick={() => setIsSearchOpen(true)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center hover:text-white transition-colors border border-transparent hover:border-white/5"
+                    onClick={() => {
+                      // Navigate straight to your dedicated SearchPage canvas
+                      setActiveTab('search');
+                    }}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-white/5 ${
+                      activeTab === 'search' ? 'text-white bg-white/10' : 'text-white/45 hover:text-white'
+                    }`}
                     whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' } as any}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.94 }}
                   >
                     <Search size={14} />
                   </motion.button>

@@ -92,7 +92,7 @@ const MoviesPage: React.FC = () => {
               <motion.button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
-                className={`relative px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 flex-shrink-0 ${
+                className={`relative px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 shrink-0 ${
                   isActive ? 'text-white' : 'text-white/50 hover:text-white/90'
                 }`}
                 whileHover={{ scale: isActive ? 1 : 1.05 }}
@@ -101,7 +101,7 @@ const MoviesPage: React.FC = () => {
                 {isActive && (
                   <motion.div
                     layoutId="activeMovieTab"
-                    className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-600 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)]"
+                    className="absolute inset-0 bg-linear-to-br from-red-500 to-rose-600 rounded-full shadow-[0_0_20px_rgba(239,68,68,0.4)]"
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   />
                 )}
@@ -126,7 +126,7 @@ const MoviesPage: React.FC = () => {
             {Array.from({ length: 24 }).map((_, i) => (
               <div 
                 key={i} 
-                className="w-full aspect-[2/3] rounded-2xl liquid-glass animate-pulse bg-gradient-to-br from-white/10 to-transparent border-white/5" 
+                className="w-full aspect-2/3 rounded-2xl liquid-glass animate-pulse bg-linear-to-br from-white/10 to-transparent border-white/5" 
               />
             ))}
           </motion.div>

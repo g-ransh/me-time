@@ -1,402 +1,381 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  SkipForward, SkipBack, RefreshCw, Radio,
-  Zap, ChevronDown, ChevronUp, Maximize, Minimize,
-  ArrowLeft, Info, CheckCircle2, AlertCircle
-} from 'lucide-react';
+import { ArrowLeft, X, Film, Tv } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { getTVDetails, getTVSeasonDetails } from '../lib/tmdb';
 
 interface Provider {
   id: string;
   name: string;
+  label: string;
   buildUrl: (id: number, type: 'movie' | 'tv', season: number, episode: number) => string;
 }
 
-// Tested, reliable providers — including CineSrc
 const PROVIDERS: Provider[] = [
-  {
-    id: 'cinesrc',
-    name: 'CineSrc',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://cinesrc.st/embed/tv/${id}/${s}/${e}`
-        : `https://cinesrc.st/embed/movie/${id}`,
+  { 
+    id: 'cinesrc', 
+    name: 'Server 1', 
+    label: 'Fast', 
+    buildUrl: (id, type, s, e) => type === 'tv' 
+      ? `https://cinesrc.st/embed/tv/${id}/${s}/${e}` 
+      : `https://cinesrc.st/embed/movie/${id}` 
   },
-  {
-    id: 'vidsrc-to',
-    name: 'VidSrc TO',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}`
-        : `https://vidsrc.to/embed/movie/${id}`,
+  { 
+    id: '2embed', 
+    name: 'Server 2', 
+    label: 'HD', 
+    buildUrl: (id, type, s, e) => type === 'tv' 
+      ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` 
+      : `https://www.2embed.cc/embed/${id}` 
   },
-  {
-    id: 'vidsrc-xyz',
-    name: 'VidSrc XYZ',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}&autoplay=1&nextEpisode=true`
-        : `https://vidsrc.xyz/embed/movie?tmdb=${id}&autoplay=1`,
+  { 
+    id: 'vidking', 
+    name: 'Server 3', 
+    label: 'Alt', 
+    buildUrl: (id, type, s, e) => type === 'tv' 
+      ? `https://vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true` 
+      : `https://vidking.net/embed/movie/${id}?autoPlay=true` 
   },
-  {
-    id: 'vidsrc-net',
-    name: 'VidSrc NET',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://vidsrc.net/embed/tv?tmdb=${id}&season=${s}&episode=${e}`
-        : `https://vidsrc.net/embed/movie?tmdb=${id}`,
-  },
-  {
-    id: 'embed-su',
-    name: 'Embed SU',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://embed.su/embed/tv/${id}/${s}/${e}`
-        : `https://embed.su/embed/movie/${id}`,
-  },
-  {
-    id: '2embed',
-    name: '2Embed',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
-        : `https://www.2embed.cc/embed/${id}`,
-  },
-  {
-    id: 'vidking',
-    name: 'VidKing',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true`
-        : `https://vidking.net/embed/movie/${id}?autoPlay=true`,
-  },
-  {
-    id: 'multiembed',
-    name: 'MultiEmbed',
-    buildUrl: (id, type, s, e) =>
-      type === 'tv'
-        ? `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`
-        : `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+  { 
+    id: 'vidsrc-xyz', 
+    name: 'Server 4', 
+    label: 'Backup', 
+    buildUrl: (id, type, s, e) => type === 'tv' 
+      ? `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}&autoplay=1` 
+      : `https://vidsrc.xyz/embed/movie?tmdb=${id}&autoplay=1` 
   },
 ];
 
 const VideoPlayer: React.FC = () => {
   const { isPlayerOpen, setIsPlayerOpen, playerMedia, setPlayerMedia } = useStore();
+
   const [providerIndex, setProviderIndex] = useState(0);
-  const [showProviderMenu, setShowProviderMenu] = useState(false);
+  const [showSourceMenu, setShowSourceMenu] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showControls, setShowControls] = useState(true);
-  const [isTheater, setIsTheater] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showEpNav, setShowEpNav] = useState(false);
   const [loadStatus, setLoadStatus] = useState<'loading' | 'loaded' | 'failed'>('loading');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [, setIsPlaying] = useState(true);
 
-  // Auto-fallback: if load takes too long, try next provider
-  useEffect(() => {
-    if (!isLoading) {
-      if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
-      return;
-    }
-    if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
-    loadTimerRef.current = setTimeout(() => {
-      // Auto-try next provider after 8 seconds if still loading
-      setProviderIndex((prev) => (prev + 1) % PROVIDERS.length);
-      setIframeKey((k) => k + 1);
-    }, 8000);
-    return () => {
-      if (loadTimerRef.current) clearTimeout(loadTimerRef.current);
-    };
-  }, [isLoading, providerIndex, iframeKey]);
+  // ── Selector Panel States ──
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [panelSeason, setPanelSeason] = useState(playerMedia?.season ?? 1);
+  const [totalSeasons, setTotalSeasons] = useState(1);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [panelLoading, setPanelLoading] = useState(false);
+  const [panelError, setPanelError] = useState(false);
 
-  // Reset on media change
+  const episodeCache = useRef<{ [seasonNum: number]: any[] }>({});
+  const sourceMenuRef = useRef<HTMLDivElement>(null);
+  const autoFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const season = playerMedia?.season ?? 1;
+  const episode = playerMedia?.episode ?? 1;
+  const type = playerMedia?.type ?? 'movie';
+  const currentProvider = PROVIDERS[providerIndex];
+
+  const currentUrl = useMemo(() => {
+    if (!playerMedia) return '';
+    return currentProvider.buildUrl(playerMedia.id, playerMedia.type, season, episode);
+  }, [playerMedia, currentProvider, season, episode]);
+
+  // ── FIX: Comprehensive Cache & Panel Reset on Show Switch ──
   useEffect(() => {
     setProviderIndex(0);
     setIframeKey(k => k + 1);
-    setIsLoading(true);
     setLoadStatus('loading');
-    setShowProviderMenu(false);
-    setShowEpNav(false);
-  }, [playerMedia?.id, playerMedia?.season, playerMedia?.episode]);
+    setIsPlaying(true);
+    
+    // Hard purge selector records so old series data doesn't bleed into new series trees
+    episodeCache.current = {};
+    setEpisodes([]);
+    setTotalSeasons(1);
+    setPanelSeason(playerMedia?.season ?? 1);
+    setPanelError(false);
+    setPanelLoading(false);
+  }, [playerMedia?.id]); // Fires immediately when a brand new media item mounts
+
+  // ── Intelligent 10s Auto-Fallback System ──
+  useEffect(() => {
+    if (loadStatus !== 'loading') {
+      if (autoFallbackRef.current) clearTimeout(autoFallbackRef.current);
+      return;
+    }
+
+    autoFallbackRef.current = setTimeout(() => {
+      setProviderIndex(p => (p + 1) % PROVIDERS.length);
+      setIframeKey(k => k + 1);
+    }, 10000);
+
+    return () => { if (autoFallbackRef.current) clearTimeout(autoFallbackRef.current); };
+  }, [loadStatus, providerIndex]);
 
   useEffect(() => {
-    if (isPlayerOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = isPlayerOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isPlayerOpen]);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (document.fullscreenElement) {
-          document.exitFullscreen();
-        } else if (showProviderMenu) {
-          setShowProviderMenu(false);
-        } else if (showEpNav) {
-          setShowEpNav(false);
-        } else {
-          setIsPlayerOpen(false);
-        }
-      }
-      if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-      if (e.key === 't' || e.key === 'T') setIsTheater((t) => !t);
-      if (e.key === 'ArrowRight' && playerMedia?.type === 'tv' && e.shiftKey) {
-        setPlayerMedia({ ...playerMedia, episode: (playerMedia.episode || 1) + 1 });
-      }
-      if (e.key === 'ArrowLeft' && playerMedia?.type === 'tv' && e.shiftKey && (playerMedia.episode || 1) > 1) {
-        setPlayerMedia({ ...playerMedia, episode: (playerMedia.episode || 1) - 1 });
-      }
+    const handleMessage = () => {
+      setIsPlaying(p => !p);
     };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setIsPlayerOpen, playerMedia, showProviderMenu, showEpNav]);
-
-  useEffect(() => {
-    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', onFsChange);
-    return () => document.removeEventListener('fullscreenchange', onFsChange);
+    window.addEventListener('blur', handleMessage);
+    return () => window.removeEventListener('blur', handleMessage);
   }, []);
 
-  const resetHideTimer = () => {
-    setShowControls(true);
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = setTimeout(() => {
-      if (!showProviderMenu && !showEpNav) setShowControls(false);
-    }, 3500);
-  };
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (sourceMenuRef.current && !sourceMenuRef.current.contains(e.target as Node)) {
+        setShowSourceMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-  const currentProvider = PROVIDERS[providerIndex];
-  const currentUrl = useMemo(() => {
-    if (!playerMedia) return '';
-    const { id, type, season = 1, episode = 1 } = playerMedia;
-    return currentProvider.buildUrl(id, type, season, episode);
-  }, [playerMedia, currentProvider]);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!isPlayerOpen) return;
+      if (e.key === 'Escape') {
+        if (isPanelOpen) setIsPanelOpen(false);
+        else if (showSourceMenu) setShowSourceMenu(false);
+        else setIsPlayerOpen(false);
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        setIsPlaying(p => !p);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isPlayerOpen, isPanelOpen, showSourceMenu]);
+
+  // ── TMDB Episode Fetching Engine ──
+  useEffect(() => {
+    if (!isPlayerOpen || type !== 'tv' || !playerMedia?.id) return;
+
+    const fetchSeasonData = async () => {
+      if (episodeCache.current[panelSeason]) {
+        setEpisodes(episodeCache.current[panelSeason]);
+        setPanelLoading(false);
+        setPanelError(false);
+        return;
+      }
+      setPanelLoading(true);
+      setPanelError(false);
+      try {
+        const seriesData = await getTVDetails(playerMedia.id);
+        if (seriesData?.number_of_seasons) {
+          setTotalSeasons(seriesData.number_of_seasons);
+        }
+        const data = await getTVSeasonDetails(playerMedia.id, panelSeason);
+        const fetchedEpisodes = data?.episodes || [];
+        episodeCache.current[panelSeason] = fetchedEpisodes;
+        setEpisodes(fetchedEpisodes);
+      } catch (err) {
+        setPanelError(true);
+      } finally {
+        setPanelLoading(false);
+      }
+    };
+    fetchSeasonData();
+  }, [playerMedia?.id, panelSeason, isPlayerOpen, type]);
 
   if (!playerMedia) return null;
-
-  const { type, season = 1, episode = 1 } = playerMedia;
-
-  const tryNextProvider = () => {
-    const next = (providerIndex + 1) % PROVIDERS.length;
-    setProviderIndex(next);
-    setIsLoading(true);
-    setLoadStatus('loading');
-  };
-
-  const reload = () => {
-    setIframeKey(k => k + 1);
-    setIsLoading(true);
-    setLoadStatus('loading');
-  };
-
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen?.();
-    } else {
-      document.exitFullscreen?.();
-    }
-  };
 
   return (
     <AnimatePresence>
       {isPlayerOpen && (
         <motion.div
-          ref={containerRef}
-          className="fixed inset-0 z-[100] bg-black flex flex-col overflow-hidden"
+          className="fixed inset-0 z-[999] bg-[#020204] flex flex-col overflow-hidden select-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onMouseMove={resetHideTimer}
-          onClick={resetHideTimer}
         >
-          {/* Cinematic Ambient Background */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[#050505]">
-            {/* Extremely subtle neutral lighting to create depth, no colors */}
-            <div className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] bg-white/[0.02] rounded-full blur-[100px]" />
-            <div className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] bg-white/[0.02] rounded-full blur-[100px]" />
-          </div>
-
-          {/* Top Bar */}
-          <AnimatePresence>
-            {showControls && (
-              <motion.div
-                initial={{ y: -80, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -80, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="absolute top-0 left-0 right-0 z-30"
-                style={{
-                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
-                  padding: '24px 32px',
-                }}
+          {/* ══════════════ 4. TOP BAR & EXIT OPTIONS ══════════════ */}
+          <div
+            className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between gap-4 px-6 pt-6 pb-16 pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, rgba(4,4,6,0.95) 0%, rgba(4,4,6,0.4) 60%, transparent 100%)' }}
+          >
+            <div className="flex items-center gap-4 min-w-0 flex-1 pointer-events-auto">
+              <button
+                onClick={() => setIsPlayerOpen(false)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white border border-white/5 bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all cursor-pointer shrink-0"
               >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-5 flex-1 min-w-0">
-                    <button
-                      onClick={() => setIsPlayerOpen(false)}
-                      className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white shrink-0 transition-colors border border-white/5"
-                    >
-                      <ArrowLeft size={20} />
-                    </button>
+                <ArrowLeft size={16} />
+              </button>
+              <div className="min-w-0 text-left">
+                <p className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-black mb-0.5 flex items-center gap-1.5">
+                  {type === 'tv' ? <Tv size={10} /> : <Film size={10} />}
+                  <span>{type === 'tv' ? 'Series Track' : 'Feature Film'}</span>
+                </p>
+                <p className="text-white/90 font-bold text-sm md:text-base tracking-tight truncate">
+                  {type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Feature Presentation'}
+                </p>
+              </div>
+            </div>
 
-                    <div className="min-w-0 flex flex-col justify-center">
-                      <p className="text-white/90 font-bold text-base md:text-lg truncate tracking-wide">
-                        {type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Feature Film'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${
-                          loadStatus === 'loaded' ? 'bg-white' : loadStatus === 'failed' ? 'bg-neutral-500' : 'bg-white/50 animate-pulse'
-                        }`} />
-                        <p className="text-xs text-white/50 font-medium tracking-wide">
-                          {loadStatus === 'loaded' ? 'Playing securely' : loadStatus === 'failed' ? 'Connection failed' : 'Establishing connection'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+            <div className="flex items-center gap-2.5 z-50 pointer-events-auto" ref={sourceMenuRef}>
+              {/* ── 2. TV PILL TRIGGER ── */}
+              {type === 'tv' && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPanelSeason(season); setIsPanelOpen(true); }}
+                  className="px-4 py-1.5 rounded-full text-xs font-bold text-white flex items-center gap-2 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer shadow-lg group"
+                  style={{ backdropFilter: 'blur(20px)' }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] animate-pulse" />
+                  <span className="text-white/90 group-hover:text-white transition-colors">{`S${season} · E${episode}`}</span>
+                </button>
+              )}
 
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowProviderMenu(!showProviderMenu)}
-                        className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-5 py-2.5 flex items-center gap-3 text-white transition-colors"
-                      >
-                        <Radio size={14} className="text-white/60" />
-                        <span className="text-[13px] font-semibold tracking-wide hidden md:inline">{currentProvider.name}</span>
-                        <ChevronDown size={14} className={`text-white/40 transition-transform ${showProviderMenu ? 'rotate-180' : ''}`} />
-                      </button>
+              {/* ── 1. SERVER SELECTION ── */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSourceMenu(s => !s)}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold text-white/80 hover:text-white border border-white/5 bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all cursor-pointer"
+                >
+                  <span className="w-1 h-1 rounded-full bg-green-400" />
+                  <span>{currentProvider.name}</span>
+                </button>
 
-                      <AnimatePresence>
-                        {showProviderMenu && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute right-0 top-full mt-3 w-56 bg-[#0a0a0f]/95 backdrop-blur-2xl rounded-2xl p-1.5 shadow-2xl border border-white/10 z-40"
-                          >
-                            <div className="max-h-64 overflow-y-auto scrollbar-hide">
-                              {PROVIDERS.map((p, i) => (
-                                <button
-                                  key={p.id}
-                                  onClick={() => {
-                                    setProviderIndex(i);
-                                    setShowProviderMenu(false);
-                                    setIsLoading(true);
-                                    setLoadStatus('loading');
-                                  }}
-                                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
-                                    i === providerIndex
-                                      ? 'bg-white/10 text-white font-semibold'
-                                      : 'hover:bg-white/5 text-white/60 font-medium'
-                                  }`}
-                                >
-                                  <div className={`w-1.5 h-1.5 rounded-full ${i === providerIndex ? 'bg-white' : 'bg-transparent'}`} />
-                                  <span className="flex-1 text-[13px] tracking-wide">{p.name}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    <button
-                      onClick={reload}
-                      className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all border border-white/5"
-                      title="Reload"
-                    >
-                      <RefreshCw size={16} />
-                    </button>
-
-                    <button
-                      onClick={toggleFullscreen}
-                      className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 items-center justify-center text-white/70 hover:text-white transition-all border border-white/5 hidden md:flex"
-                      title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen (F)'}
-                    >
-                      {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Player Frame */}
-          <div className="flex-1 relative flex items-center justify-center min-h-0">
-            <motion.div
-              className={`w-full h-full relative overflow-hidden transition-all duration-500 ${
-                isTheater ? '' : 'liquid-glass-dark p-1.5 shadow-2xl shadow-red-900/30'
-              }`}
-              style={{
-                borderRadius: isTheater ? 0 : '28px',
-                margin: isTheater ? 0 : '16px',
-              }}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.15, duration: 0.5 }}
-            >
-              <div
-                className={`w-full h-full overflow-hidden bg-black relative ${isTheater ? '' : 'rounded-[22px]'}`}
-              >
-                {/* Loading Overlay */}
                 <AnimatePresence>
-                  {isLoading && (
+                  {showSourceMenu && (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#050505]/95 backdrop-blur-xl"
+                      initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                      className="absolute right-0 top-full mt-2 w-44 rounded-2xl overflow-hidden p-1.5 border border-white/10 shadow-2xl"
+                      style={{ background: 'rgba(10,10,14,0.95)', backdropFilter: 'blur(30px)' }}
                     >
-                      {/* Clean Apple-style single spinner */}
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                        className="w-12 h-12 rounded-full border-[3px] border-white/10 border-t-white/80 mb-6"
-                      />
-                      <p className="text-white/90 text-[15px] font-semibold tracking-wide mb-1">Connecting to source...</p>
-                      <p className="text-white/40 text-sm font-medium mb-8">{currentProvider.name}</p>
-                      
-                      <button
-                        onClick={tryNextProvider}
-                        className="bg-white/10 hover:bg-white/20 transition-colors duration-200 rounded-full px-6 py-2.5 text-xs font-semibold tracking-wide text-white flex items-center gap-2 border border-white/5"
-                      >
-                        <Zap size={14} className="text-white/60" /> Try next server
-                      </button>
+                      {PROVIDERS.map((p, i) => (
+                        <button
+                          key={p.id}
+                          onClick={() => { setProviderIndex(i); setShowSourceMenu(false); setLoadStatus('loading'); setIframeKey(k => k + 1); }}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-xl text-xs font-bold transition-all cursor-pointer ${i === providerIndex ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                        >
+                          <span>{p.name}</span>
+                          <span className="text-[9px] opacity-20 font-medium uppercase">{p.label}</span>
+                        </button>
+                      ))}
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                <iframe
-                  key={iframeKey}
-                  src={currentUrl}
-                  className="w-full h-full border-0"
-                  allowFullScreen
-                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope"
-                  title="Video Player"
-                  onLoad={() => {
-                    setIsLoading(false);
-                    setLoadStatus('loaded');
-                  }}
-                  onError={() => {
-                    setLoadStatus('failed');
-                    setIsLoading(false);
-                  }}
-                />
               </div>
-            </motion.div>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+          {/* ══════════════ CONTENT SURFACE IFRAME ENGINE ══════════════ */}
+          <div className="flex-1 w-full h-full relative bg-black z-10">
+            {/* ── 4. LOADING TRACKS SCREEN ── */}
+            <AnimatePresence>
+              {loadStatus === 'loading' && (
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#050508]"
+                >
+                  <div className="text-center mb-6">
+                    <p className="text-white/90 font-bold text-base md:text-lg tracking-tight mb-1">
+                      {type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Loading Film Stream'}
+                    </p>
+                    <p className="text-white/30 text-xs tracking-wide">Securing network node via {currentProvider.name}...</p>
+                  </div>
+                  <div className="w-32 h-[2px] bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full w-1/2"
+                      style={{ background: 'linear-gradient(90deg, transparent, #ef4444, transparent)' }}
+                      animate={{ x: ['-100%', '300%'] }}
+                      transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <iframe
+              key={iframeKey}
+              src={currentUrl}
+              className="w-full h-full border-0 absolute inset-0"
+              allowFullScreen
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+              title="Video Feed Content"
+              onLoad={() => setLoadStatus('loaded')}
+            />
           </div>
+
+          {/* ── 2. MATCHING MEDIA-CARD LEVEL SELECTION SLIDING SHEET ── */}
+          <AnimatePresence>
+            {isPanelOpen && type === 'tv' && (
+              <>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsPanelOpen(false)} className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-xl cursor-pointer" />
+                <motion.div
+                  initial={{ scale: 0.97, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.97, opacity: 0, y: 20 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-4xl h-[76vh] z-[101] rounded-3xl p-6 md:p-8 flex flex-col overflow-hidden text-left"
+                  style={{
+                    backgroundColor: 'rgba(12, 12, 16, 0.6)',
+                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.005) 100%)',
+                    backdropFilter: 'blur(50px) saturate(220%) brightness(115%)',
+                    WebkitBackdropFilter: 'blur(50px) saturate(220%) brightness(115%)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    boxShadow: '0 35px 80px -20px rgba(0, 0, 0, 0.95), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-5 shrink-0">
+                    <div>
+                      <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Navigation Index</h3>
+                      <p className="text-base font-bold text-white tracking-tight">Select Season & Track</p>
+                    </div>
+                    <button onClick={() => setIsPanelOpen(false)} className="w-8 h-8 rounded-full bg-white/5 border border-white/5 hover:border-white/10 flex items-center justify-center text-white/60 hover:text-white cursor-pointer"><X size={14} /></button>
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto pb-4 border-b border-white/5 scrollbar-none shrink-0">
+                    {Array.from({ length: totalSeasons }).map((_, idx) => {
+                      const sNum = idx + 1;
+                      const isTargetActive = panelSeason === sNum;
+                      return (
+                        <button
+                          key={sNum} onClick={() => setPanelSeason(sNum)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${isTargetActive ? 'text-white bg-red-600 shadow-lg shadow-red-600/20' : 'text-white/40 border border-white/5 bg-white/[0.02] hover:text-white'}`}
+                        >
+                          Season {sNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto mt-4 space-y-2.5 custom-scrollbar pr-1">
+                    {panelLoading ? (
+                      Array.from({ length: 4 }).map((_, idx) => (
+                        <div key={idx} className="w-full h-20 rounded-xl bg-white/[0.02] border border-white/5 animate-pulse flex items-center p-3 gap-4">
+                          <div className="w-24 h-full bg-white/5 rounded-lg" /><div className="flex-1 space-y-2"><div className="w-1/3 h-3 bg-white/5 rounded" /><div className="w-1/2 h-2 bg-white/5 rounded" /></div>
+                        </div>
+                      ))
+                    ) : episodes.map((ep, idx) => {
+                      const isCurrent = season === panelSeason && episode === ep.episode_number;
+                      return (
+                        <div
+                          key={ep.id}
+                          onClick={() => { if (!playerMedia) return; setPlayerMedia({ ...playerMedia, season: panelSeason, episode: ep.episode_number }); setIsPanelOpen(false); setIframeKey(k => k + 1); }}
+                          className="flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer select-none group"
+                          style={{ backgroundColor: isCurrent ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255, 255, 255, 0.01)', borderColor: isCurrent ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.04)' }}
+                        >
+                          <span className={`text-xs font-bold w-4 text-center ${isCurrent ? 'text-red-400' : 'text-white/20'}`}>{ep.episode_number}</span>
+                          <div className="w-24 aspect-video rounded-lg overflow-hidden border border-white/5 bg-white/5 shrink-0">
+                            {ep.still_path ? <img src={`https://image.tmdb.org/t/p/w300${ep.still_path}`} alt="" className="w-full h-full object-cover opacity-60" /> : <div className="w-full h-full bg-neutral-900" />}
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <h4 className={`text-xs md:text-sm font-bold truncate ${isCurrent ? 'text-red-400' : 'text-white/90'}`}>{ep.name}</h4>
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-white/30">
+                              {ep.air_date && <span>{ep.air_date}</span>}
+                              {ep.runtime && <span>• {ep.runtime}m</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
         </motion.div>
       )}
     </AnimatePresence>
