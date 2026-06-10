@@ -8,6 +8,7 @@ export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export const tmdb = axios.create({
   baseURL: TMDB_BASE_URL,
+  timeout: 5000, // Forces the connection to stop waiting after 5 seconds and trigger catch fallbacks
   params: {
     api_key: TMDB_API_KEY,
     language: 'en-US',
@@ -57,8 +58,21 @@ export const getNowPlaying = async (page = 1): Promise<TMDBResponse<Movie>> => {
   return data;
 };
 
+// Named to match your core series tab import requirements cleanly
+export const getAiringTodayTV = async (page = 1): Promise<TMDBResponse<Movie>> => {
+  const { data } = await tmdb.get('/tv/airing_today', { params: { page } });
+  return data;
+};
+
+// Retained for backward-compatibility hooks
 export const getAiringToday = async (page = 1): Promise<TMDBResponse<Movie>> => {
   const { data } = await tmdb.get('/tv/airing_today', { params: { page } });
+  return data;
+};
+
+// ── On The Air TV (Added explicitly to resolve missing export crash) ──
+export const getOnTheAirTV = async (page = 1): Promise<TMDBResponse<Movie>> => {
+  const { data } = await tmdb.get('/tv/on_the_air', { params: { page } });
   return data;
 };
 
@@ -84,7 +98,7 @@ export const getTVDetails = async (id: number): Promise<MovieDetails> => {
 };
 
 /**
- * NEW: Dynamic Season & Episode Track Mapping Resolver Engine
+ * Dynamic Season & Episode Track Mapping Resolver Engine
  * Pulls episode stills, air dates, and titles for target seasons.
  */
 export const getTVSeasonDetails = async (seriesId: number, seasonNumber: number): Promise<any> => {

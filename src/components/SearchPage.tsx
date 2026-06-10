@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, Sparkles, X, Filter, Tv, Film } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Movie } from '../types';
-import { searchMulti, getTrending } from '../lib/tmdb';
+import { searchMulti } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
 import MediaCard from './MediaCard';
 
@@ -11,23 +11,18 @@ const SearchPage: React.FC = () => {
   const [results, setResults] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'movie' | 'tv'>('all');
-  const [trending, setTrending] = useState<Movie[]>([]);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (inputRef.current) inputRef.current.focus();
-    getTrending('all', 'week').then(data => {
-      setTrending(data.results.slice(0, 12));
-    }).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     
-    if (!searchQuery || searchQuery.length < 2) {
+    if (!searchQuery || searchQuery.trim().length < 2) {
       setResults([]);
       setHasSearched(false);
       return;
@@ -49,149 +44,106 @@ const SearchPage: React.FC = () => {
     }, 400);
   }, [searchQuery]);
 
-  const displayResults = filter === 'all'
-    ? results
-    : results.filter(r => r.media_type === filter);
+  const liquidGlassStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backdropFilter: 'blur(32px) saturate(160%)',
+    WebkitBackdropFilter: 'blur(32px) saturate(160%)',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
+  };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#050507] overflow-x-hidden text-white antialiased flex flex-col justify-start pt-40 px-6 md:px-12 pb-24 select-none">
+    /* FIXED: Swapped parent container layout token from global select-none to user-select-auto so forms take focus */
+    <div className="relative min-h-screen w-full bg-[#020204] text-white overflow-x-hidden flex flex-col justify-start" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
       
-      {/* Search Hero Area */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 max-w-2xl mx-auto mb-8 text-center flex flex-col items-center"
-      >
-        <h1 className="text-3xl md:text-[40px] font-bold text-white tracking-normal mb-6">
+      {/* Ambient Backdrop Aura Glow Bleed Layers */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        <div 
+          className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1200px] h-[600px] opacity-35 blur-[140px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,140,0,0.5) 0%, rgba(255,165,0,0.15) 50%, rgba(0,0,0,0) 100%)'
+          }}
+        />
+      </div>
+
+      {/* Main Structural Centered Viewport Wrapper */}
+      {/* FIXED: isolated select-none to everything outside of the search inputs to ensure native keyboard entry flows cleanly */}
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 md:px-0 flex flex-col items-center pt-48">
+        
+        {/* Exact Image Styled Title Header */}
+        <h1 className="text-4xl md:text-[44px] font-black tracking-tight text-white font-sans text-center mb-5 select-none">
           What's your next obsession?
         </h1>
 
-        <motion.div
-          className="w-full max-w-xl rounded-full flex items-center gap-3 px-5 py-3 transition-all group"
+        {/* Expanded Panoramic Search Bar Terminal Input Box */}
+        <div 
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            backgroundColor: 'rgba(255, 255, 255, 0.03)',
             border: '1px solid rgba(255, 255, 255, 0.05)',
-            boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.02), 0 20px 40px -10px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9)'
           }}
+          className="w-full max-w-[680px] rounded-full flex items-center gap-3.5 px-6 py-4 transition-all duration-300 focus-within:border-white/10 group mb-16"
         >
-          <Search size={16} className="text-white/30 group-focus-within:text-white/70 transition-colors shrink-0" />
+          <Search size={18} className="text-white/20 group-focus-within:text-white/60 transition-colors shrink-0" />
           <input
             ref={inputRef}
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for movies & TV shows..."
-            className="bg-transparent text-white/90 placeholder-white/20 text-sm outline-none flex-1 font-medium tracking-normal"
+            className="bg-transparent text-white/90 placeholder-white/20 text-base outline-none flex-1 font-medium tracking-wide font-sans"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-white/70 transition-colors"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-all cursor-pointer"
             >
-              <X size={14} />
+              <X size={15} />
             </button>
           )}
-        </motion.div>
-      </motion.div>
+        </div>
 
-      {/* Conditional Content */}
-      <AnimatePresence mode="wait">
-        {!hasSearched ? (
-          <motion.div
-            key="qol-dashboard"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="relative z-10 max-w-4xl mx-auto px-4"
-          >
-            {/* QoL Quick Navigation Hub */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-              {[
-                { label: 'Continue Watching', desc: 'Pick up right where you left off', icon: '🍿', action: 'home' },
-                { label: 'Your Watchlist', desc: 'Jump to your curated shelf', icon: '✨', action: 'list' },
-                { label: 'Surprise Selection', desc: 'Let the system pick for you', icon: '🎲', action: 'genres' }
-              ].map((hub) => (
-                <button
-                  key={hub.label}
-                  onClick={() => {
-                    // Update active tab context securely via store state 
-                    useStore.setState({ activeTab: hub.action as any });
-                  }}
-                  className="flex flex-col text-left p-5 rounded-2xl bg-white/0.02 border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all cursor-pointer group"
-                >
-                  <span className="text-2xl mb-3 block group-hover:scale-110 transition-transform w-fit">{hub.icon}</span>
-                  <h3 className="text-sm font-bold text-white/90 mb-1">{hub.label}</h3>
-                  <p className="text-white/40 text-xs font-medium leading-normal">{hub.desc}</p>
-                </button>
-              ))}
-            </div>
-
-            {/* Premium Recent Searches / History Tracking Pill Bar */}
-            <div className="border-t border-white/5 pt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-white/30">Recent Searches</h3>
-                <button 
-                  onClick={() => useStore.setState({ searchQuery: '' })}
-                  className="text-[11px] font-bold text-white/40 hover:text-white/80 transition-colors cursor-pointer"
-                >
-                  Clear History
-                </button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {['Spider-Man', 'Batman', 'Sci-Fi Thrillers', 'Anime 2026'].map((term) => (
-                  <button
-                    key={term}
-                    onClick={() => setSearchQuery(term)}
-                    className="px-4 py-2 rounded-full text-xs font-semibold text-white/70 hover:text-white transition-all cursor-pointer"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(255, 255, 255, 0.05)'
-                    }}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {/* Low-profile Item Counter */}
-            <div className="mb-8 px-6 md:px-10">
-              <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">
-                {loading ? 'Scanning server database...' : `Discovered ${displayResults.length} matches`}
-              </p>
-            </div>
-
-            {/* Results Grid */}
-            {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} className="w-full aspect-2/3 rounded-2xl liquid-glass animate-pulse" />
-                ))}
-              </div>
-            ) : displayResults.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 px-6 md:px-10">
-                {displayResults.map((movie, i) => (
-                  <MediaCard key={movie.id} movie={movie} index={i} size="lg" />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-32">
-                <div className="w-12 h-12 mx-auto mb-6 rounded-full liquid-glass flex items-center justify-center">
-                  <Search size={20} className="text-white/20" />
-                </div>
-                <h3 className="text-2xl font-black text-white/50">No results found for "{searchQuery}"</h3>
-              </div>
+        {/* Dynamic Context Results Grid Stage */}
+        <div className="w-full relative min-h-[200px] select-none">
+          <AnimatePresence mode="wait">
+            {hasSearched && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full"
+              >
+                {loading ? (
+                  /* Shimmer Loading Skeletons State */
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 w-full">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="w-full aspect-[2/3] rounded-2xl animate-pulse bg-white/[0.02] border border-white/5" />
+                    ))}
+                  </div>
+                ) : results.length > 0 ? (
+                  /* Data Render List Grid */
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 w-full">
+                    {results.map((movie, i) => (
+                      <MediaCard key={movie.id} movie={movie} index={i} size="lg" />
+                    ))}
+                  </div>
+                ) : (
+                  /* Empty State fallback container */
+                  <div className="text-center py-20 w-full flex flex-col items-center">
+                    <div style={liquidGlassStyle} className="w-16 h-16 mb-6 rounded-full flex items-center justify-center shadow-xl">
+                      <Search size={24} className="text-white/20" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white/40 font-sans">
+                      No results found for "{searchQuery}"
+                    </h3>
+                  </div>
+                )}
+              </motion.div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </AnimatePresence>
+        </div>
+
+      </div>
     </div>
   );
 };

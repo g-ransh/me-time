@@ -10,6 +10,8 @@ import SearchPage from './components/SearchPage';
 import GenresPage from './components/GenresPage';
 import MediaModal from './components/MediaModal';
 import VideoPlayer from './components/VideoPlayer';
+import WatchlistPage from './components/WatchlistPage';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +33,7 @@ const AppContent: React.FC = () => {
     series: <SeriesPage />,
     genres: <GenresPage />,
     search: <SearchPage />,
+    watchlist: <WatchlistPage />,
     list: <div className="pt-32 text-center">Your Curated List Canvas</div> // Swap with <WatchlistPage /> later
   };
 

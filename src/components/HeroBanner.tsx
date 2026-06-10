@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Info, Star, Check, Clock, MessageCircle, Calendar } from 'lucide-react';
+import { Play, Plus, Info, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Movie } from '../types';
 import { getBackdropUrl, getTitle, getReleaseYear } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
@@ -13,35 +13,20 @@ const GENRE_MAP: Record<number, string> = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
   80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
   14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
-  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 53: 'Thriller',
-};
-
-// Helper to format runtime (minutes -> "1h 48m")
-const formatRuntime = (minutes?: number) => {
-  if (!minutes) return null;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours}h ${mins}m`;
+  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
+  53: 'Thriller', 10752: 'War', 37: 'Western',
 };
 
 const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const { 
-    setSelectedMedia, 
-    setIsModalOpen, 
-    addToWatchlist, 
-    removeFromWatchlist, 
-    isInWatchlist, 
-    setPlayerMedia, 
-    setIsPlayerOpen 
-  } = useStore();
+  const { setSelectedMedia, setIsModalOpen, addToWatchlist, isInWatchlist, setPlayerMedia, setIsPlayerOpen } = useStore();
 
   const featured = movies.slice(0, 5);
   const current = featured[currentIndex];
 
   useEffect(() => {
-    if (!isAutoPlaying || !featured.length) return;
+    if (!isAutoPlaying || featured.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % featured.length);
     }, 6000);
@@ -54,165 +39,171 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
+  const prev = () => goTo((currentIndex - 1 + featured.length) % featured.length);
+  const next = () => goTo((currentIndex + 1) % featured.length);
+
   if (!current) return null;
 
   const genres = current.genre_ids?.slice(0, 3).map((id) => GENRE_MAP[id]).filter(Boolean) || [];
   const inWatchlist = isInWatchlist(current.id);
-  const rating = current.vote_average ? current.vote_average.toFixed(1) : 'N/A';
-  const voteCount = current.vote_count ? current.vote_count.toLocaleString() : '0';
-  const runtimeFormatted = formatRuntime(current.runtime); // runtime might be missing in list endpoints
 
-  const handleWatchlistToggle = () => {
-    if (inWatchlist) {
-      removeFromWatchlist(current.id);
-    } else {
-      addToWatchlist(current);
-    }
+  // Premium Liquid Glass Blur Config Stylesheet
+  const liquidGlassStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backdropFilter: 'blur(32px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+    border: '1px solid rgba(255, 255, 255, 0.07)',
   };
 
   return (
-    <div className="relative w-full h-[85vh] min-h-[600px] overflow-hidden select-none bg-black">
-      {/* Background Images with Smooth Transitions */}
-      <AnimatePresence mode="wait">
+    <div className="relative h-screen min-h-[700px] max-h-[950px] w-full overflow-hidden bg-[#020204]" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
+      
+      {/* Background Cinematic Canvas Layers */}
+      <AnimatePresence mode="sync">
         <motion.div
           key={currentIndex}
-          className="absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          className="absolute inset-0 z-0"
+          initial={{ opacity: 0, scale: 1.03 }}
+          animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 0.85, ease: [0.25, 1, 0.5, 1] }}
         >
           <img
             src={getBackdropUrl(current.backdrop_path)}
-            alt={getTitle(current)}
-            className="w-full h-full object-cover object-center"
+            alt=""
+            className="w-full h-full object-cover opacity-50"
           />
-          {/* Premium Overlay Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+          {/* Proportional Lighting Vignette Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#020204] via-[#020204]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020204] via-transparent to-[#020204]/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#020204]" />
         </motion.div>
       </AnimatePresence>
 
-      {/* Hero Content */}
-      <div className="relative z-20 w-full h-full max-w-7xl mx-auto flex flex-col justify-end pb-24 px-8 md:px-12">
+      {/* Main Foreground Content Stage */}
+      <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-16 lg:px-24 pt-16 max-w-[1400px] mx-auto text-left">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -30 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 15 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
             className="max-w-3xl"
           >
-            {/* Strip Metadata */}
-            <div className="flex items-center gap-3 mb-6 text-sm font-medium tracking-wide text-white">
-              {/* Rating */}
+            {/* Perfectly Unified Golden Ratio Badges Row */}
+            <div className="flex items-center gap-3 mb-6">
+              {/* Rating Pill */}
               <div 
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                style={liquidGlassStyle} 
+                className="w-24 h-9 rounded-full flex items-center justify-center gap-1.5 shadow-xl text-xs font-bold text-white shrink-0"
               >
-                <Star size={11} className="fill-amber-400 text-amber-400" />
-                <span>{rating}/10</span>
+                <Star size={13} className="text-amber-400 fill-amber-400" />
+                <span>{current.vote_average?.toFixed(1) || 'N/A'}</span>
               </div>
 
-              {/* Year */}
+              {/* Release Year Pill */}
               <div 
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                style={liquidGlassStyle} 
+                className="w-24 h-9 rounded-full flex items-center justify-center shadow-xl text-xs font-bold text-white/80 shrink-0"
               >
-                <Calendar size={11} className="text-white/50" />
                 <span>{getReleaseYear(current)}</span>
               </div>
 
-              {/* Runtime */}
-              {runtimeFormatted && (
+              {/* Primary Genre Pill */}
+              {genres[0] && (
                 <div 
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+                  style={liquidGlassStyle} 
+                  className="w-24 h-9 rounded-full flex items-center justify-center shadow-xl text-xs font-bold text-white/80 shrink-0 truncate px-2"
                 >
-                  <span>{runtimeFormatted}</span>
+                  <span>{genres[0]}</span>
                 </div>
               )}
             </div>
 
-            {/* Title */}
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-white mb-5 uppercase">
+            {/* Expanded Authoritative Upper Title Focal Point */}
+            <h1 
+              className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-[0.9] mb-5 font-sans drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+            >
               {getTitle(current)}
             </h1>
 
-            {/* Synopsis */}
-            <p className="text-white/70 text-base md:text-lg line-clamp-3 mb-6 max-w-xl">
-              {current.overview}
+            {/* Content Overview Segment Description */}
+            <p className="text-white/50 text-sm md:text-base font-normal leading-relaxed mb-8 max-w-xl font-sans tracking-wide drop-shadow-sm line-clamp-3">
+              {current.overview || 'No presentation logging cataloged for this specific archival showcase frame.'}
             </p>
 
-            {/* ShuttleTV Premium Liquid Glass Action Controls */}
-            <div className="flex items-center gap-3 relative z-30">
-              {/* Primary Play Button */}
-              <button
+            {/* Magnified Actions Row Block Interface */}
+            <div className="flex items-center gap-3.5 flex-wrap">
+              <motion.button
                 onClick={() => {
-                  setPlayerMedia({ id: current.id, type: current.media_type === 'tv' ? 'tv' : 'movie' });
+                  setPlayerMedia({
+                    id: current.id,
+                    type: current.media_type === 'tv' ? 'tv' : 'movie',
+                  });
                   setIsPlayerOpen(true);
                 }}
-                className="px-7 py-3 rounded-full font-bold text-xs tracking-wider uppercase flex items-center gap-2 text-black bg-white hover:bg-neutral-200 transition-all cursor-pointer transform active:scale-95 shadow-lg"
+                className="px-8 py-4 rounded-full font-bold text-sm flex items-center gap-2 bg-white text-black transition-all cursor-pointer shadow-2xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <Play size={12} className="fill-current text-black" />
-                <span>Play</span>
-              </button>
+                <Play size={14} className="fill-current" />
+                Play
+              </motion.button>
 
-              {/* Scaled-Up Glassmorphic Info/Details Button */}
-              <button
+              <motion.button
                 onClick={() => {
                   setSelectedMedia(current);
                   setIsModalOpen(true);
                 }}
-                className="px-6 py-3 rounded-full font-bold text-xs tracking-wider uppercase flex items-center gap-2 text-white border border-white/10 hover:border-white/20 transition-all cursor-pointer transform active:scale-95 shadow-md"
-                style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                  backdropFilter: 'blur(16px)', 
-                  WebkitBackdropFilter: 'blur(16px)',
-                  boxShadow: 'inset 0 1px 1px 0 rgba(255,255,255,0.1)'
-                }}
+                style={liquidGlassStyle}
+                className="px-7 py-4 rounded-full font-bold text-sm flex items-center gap-2 text-white hover:bg-white/5 transition-all cursor-pointer shadow-2xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <Info size={13} className="text-white/70" />
-                <span>More Info</span>
-              </button>
+                <Info size={14} />
+                Info
+              </motion.button>
 
-              {/* Standalone Balanced Watchlist Button */}
-              <button
-                onClick={handleWatchlistToggle}
-                className="w-[42px] h-[42px] rounded-full border border-white/10 flex items-center justify-center transition-all cursor-pointer transform active:scale-95 shadow-md group"
-                style={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-                  backdropFilter: 'blur(16px)', 
-                  WebkitBackdropFilter: 'blur(16px)',
-                  boxShadow: 'inset 0 1px 1px 0 rgba(255,255,255,0.1)'
-                }}
-                title="Watchlist"
+              <motion.button
+                onClick={() => inWatchlist ? useStore.getState().removeFromWatchlist(current.id) : addToWatchlist(current)}
+                style={liquidGlassStyle}
+                className={`w-14 h-14 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/5 transition-all shadow-2xl ${inWatchlist ? 'text-red-400' : 'text-white'}`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {inWatchlist ? (
-                  <Check size={16} className="text-amber-400" />
-                ) : (
-                  <Plus size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                )}
-              </button>
+                <Plus size={20} className={inWatchlist ? 'rotate-45' : ''} style={{ transition: 'transform 0.3s ease-out' }} />
+              </motion.button>
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Centered Pagination Indicators */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+      {/* Proportional Navigation Carousel Dots */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5">
         {featured.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
-            className={`rounded-full transition-all duration-300 ${
-              i === currentIndex 
-                ? 'w-6 h-1.5 bg-white' 
-                : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/50'
+            className={`rounded-full transition-all duration-300 cursor-pointer ${
+              i === currentIndex ? 'w-8 h-2 bg-white' : 'w-2 h-2 bg-white/20 hover:bg-white/40'
             }`}
-            aria-label={`Go to slide ${i + 1}`}
           />
+        ))}
+      </div>
+
+      {/* Compact Interactive Right Side Miniature Thumb Rail */}
+      <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col gap-3">
+        {featured.map((movie, i) => (
+          <button
+            key={movie.id}
+            onClick={() => goTo(i)}
+            className={`relative w-24 h-14 rounded-xl overflow-hidden transition-all duration-500 cursor-pointer ${
+              i === currentIndex ? 'ring-2 ring-white opacity-100 scale-105' : 'opacity-30 hover:opacity-60'
+            }`}
+          >
+            <img src={getBackdropUrl(movie.backdrop_path)} alt="" className="w-full h-full object-cover" />
+          </button>
         ))}
       </div>
     </div>
