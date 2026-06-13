@@ -1,149 +1,356 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Star, Bookmark, Film, Calendar, Clock, MapPin, Tag } from 'lucide-react';
+import { X, Play, Star, Film, Bookmark, Calendar, Clock, Tv } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { getMovieDetails, getTVDetails, getBackdropUrl, getPosterUrl, getTitle, getReleaseYear } from '../lib/tmdb';
-import { MovieDetails } from '../types';
+import { Movie, MovieDetails } from '../types';
+
+const LOGO_BASE = 'https://image.tmdb.org/t/p/w500';
 
 const MediaModal: React.FC = () => {
   const {
-    isModalOpen, setIsModalOpen,
-    selectedMedia, setSelectedMedia,
-    addToWatchlist, removeFromWatchlist, isInWatchlist,
-    setPlayerMedia, setIsPlayerOpen,
+    isModalOpen,
+    setIsModalOpen,
+    selectedMedia,
+    setSelectedMedia,
+    addToWatchlist,
+    removeFromWatchlist,
+    isInWatchlist,
+    setPlayerMedia,
+    setIsPlayerOpen,
   } = useStore();
 
   const [details, setDetails] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(false);
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
 
-  // Fetch Full Details
+  const getMediaType = (): 'tv' | 'movie' => {
+    if (!selectedMedia) return 'movie';
+    if (selectedMedia.media_type === 'tv') return 'tv';
+    if (selectedMedia.media_type === 'movie') return 'movie';
+    
+    if (
+      'first_air_date' in selectedMedia || 
+      'name' in selectedMedia || 
+      'number_of_seasons' in selectedMedia ||
+      'content_ratings' in selectedMedia
+    ) {
+      return 'tv';
+    }
+    return 'movie';
+  };
+
+  const mediaType = getMediaType();
+
   useEffect(() => {
     if (!selectedMedia || !isModalOpen) return;
     setDetails(null);
+    setLogoPath(null);
     setLoading(true);
-    const fetchDetails = async () => {
+    setShowTrailer(false);
+
+    (async () => {
       try {
-        const type = selectedMedia.media_type === 'tv' ? 'tv' : 'movie';
-        const data = type === 'tv'
+        const data = mediaType === 'tv'
           ? await getTVDetails(selectedMedia.id)
           : await getMovieDetails(selectedMedia.id);
         setDetails(data);
+
+        const d = data as any;
+        const logos = d.images?.logos ?? [];
+        const logo = logos.find((l: any) => l.iso_639_1 === 'en') ?? logos[0] ?? null;
+        if (logo) setLogoPath(logo.file_path);
       } catch (err) {
-        console.error("Error fetching media details:", err);
+        console.error("Failed fetching TMDB details context:", err);
       } finally {
         setLoading(false);
       }
-    };
-    fetchDetails();
-  }, [selectedMedia, isModalOpen]);
+    })();
+  }, [selectedMedia?.id, isModalOpen, mediaType]);
 
-  // Lock scroll
   useEffect(() => {
-    if (isModalOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
+    document.body.style.overflow = isModalOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isModalOpen]);
 
   if (!selectedMedia) return null;
 
   const inWatchlist = isInWatchlist(selectedMedia.id);
-  const mediaType = selectedMedia.media_type === 'tv' ? 'tv' : 'movie';
   const displayData = details || selectedMedia;
   const title = getTitle(displayData);
-  const year = getReleaseYear(displayData);
-  
+  const year = getReleaseYear(displayData) || '—';
+  const isTV = mediaType === 'tv';
+
   const runtime = details?.runtime
-    ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60}m`
+    ? `${Math.floor(details.runtime / 60)}h ${details.runtime % 60 > 0 ? `${details.runtime % 60}m` : ''}`.trim()
     : details?.number_of_seasons
     ? `${details.number_of_seasons} Season${details.number_of_seasons > 1 ? 's' : ''}`
-    : null;
+    : '—';
 
-  const cast = details?.credits?.cast?.slice(0, 10) || [];
-  const director = details?.credits?.crew?.find(c => c.job === 'Director');
-  const similar = details?.similar?.results?.slice(0, 12) || [];
+  const cast = details?.credits?.cast?.slice(0, 10) ?? [];
+  const trailer = details?.videos?.results?.find(
+    (v: any) => v.type === 'Trailer' && v.site === 'YouTube',
+  );
+
+  const getCert = (): string => {
+    if (!details) return 'NR';
+    const d = details as any;
+    if (mediaType === 'movie') {
+      const us = d.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'US');
+      return us?.release_dates?.find((x: any) => x.certification)?.certification || 'PG-13';
+    }
+    return d.content_ratings?.results?.find((r: any) => r.iso_3166_1 === 'US')?.rating || 'TV-14';
+  };
+  const cert = getCert();
+
+  const liquidGlassStyle: React.CSSProperties = {
+    background: 'rgba(10, 10, 12, 0.42)',
+    backdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
+    WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
+    border: '1px solid rgba(255, 255, 255, 0.11)',
+    fontFamily: '"Inter", sans-serif',
+  };
+
+  const getRatingStyle = (rating: string): React.CSSProperties => {
+    const baseGlow = {
+      backdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
+      WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
+      fontFamily: '"Inter", sans-serif',
+    };
+    
+    if (rating === 'R' || rating === 'TV-MA') {
+      return { ...baseGlow, background: 'rgba(239, 68, 68, 0.22)', border: '1px solid rgba(239, 68, 68, 0.45)', color: '#f87171' };
+    }
+    if (rating === 'PG-13' || rating === 'TV-14') {
+      return { ...baseGlow, background: 'rgba(251, 191, 36, 0.22)', border: '1px solid rgba(251, 191, 36, 0.45)', color: '#fbbf24' };
+    }
+    if (rating === 'PG' || rating === 'TV-PG') {
+      return { ...baseGlow, background: 'rgba(96, 165, 250, 0.22)', border: '1px solid rgba(96, 165, 250, 0.45)', color: '#60a5fa' };
+    }
+    if (rating === 'G' || rating === 'TV-G' || rating === 'TV-Y7') {
+      return { ...baseGlow, background: 'rgba(74, 222, 128, 0.22)', border: '1px solid rgba(74, 222, 128, 0.45)', color: '#4ade80' };
+    }
+    return liquidGlassStyle;
+  };
+
+  const pillClass = 'h-[32px] px-4 rounded-full flex items-center gap-2 text-[13px] font-bold whitespace-nowrap select-none text-white';
 
   return (
     <AnimatePresence>
       {isModalOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6"
+          className="fixed inset-0 z-[999] flex items-end md:items-center justify-center p-0 md:p-6"
+          style={{ background: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
-          <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
-            onClick={() => setIsModalOpen(false)}
-          />
+          <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
 
           <motion.div
-            className="relative w-full max-w-5xl max-h-[90vh] bg-[#0f0f0f] rounded-[24px] overflow-hidden border border-white/10 shadow-2xl flex flex-col"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-[960px] max-h-[94vh] flex flex-col rounded-t-[28px] md:rounded-[28px] overflow-hidden"
+            style={{
+              background: '#0a0a0c',
+              border: '1px solid rgba(255,255,255,0.06)',
+              /* Ironclad Override: Eradicates cascaded border shadow outline loops */
+              boxShadow: 'none',
+            }}
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Close */}
-            <button
+            {/* Close Overlay Controller Button */}
+            <motion.button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-40 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full flex items-center justify-center active:scale-90 cursor-pointer shadow-lg group text-white border border-white/10 bg-white/5 hover:text-[#ef4444] hover:border-[#ef4444]/30 hover:bg-[#ef4444]/10"
+              whileHover={{ rotate: 90 }}
+              /* Sped up duration matching parameters exactly to a 300ms tween block */
+              transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
+              style={{
+                backdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
+                WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
+              }}
             >
-              <X size={20} />
-            </button>
+              <X size={18} className="transition-colors duration-200" />
+            </motion.button>
 
-            {/* Backdrop Header */}
-            <div className="relative h-[300px] md:h-[450px] w-full flex-shrink-0">
-              <img
-                src={getBackdropUrl(displayData.backdrop_path)}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent" />
+            <div className="overflow-y-auto flex-1 pb-10" style={{ scrollbarWidth: 'none' }}>
               
-              <div className="absolute bottom-0 left-0 p-8">
-                <h2 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight">{title}</h2>
-                <div className="flex items-center gap-4 text-white/70 text-sm font-medium">
-                  <span className="flex items-center gap-1"><Star size={16} className="text-yellow-500 fill-yellow-500" /> {displayData.vote_average?.toFixed(1)}</span>
-                  <span>{year}</span>
-                  {runtime && <span>{runtime}</span>}
+              {/* ── Backdrop Hero Area ── */}
+              <div className="relative w-full aspect-video bg-[#0d0d11]">
+                {showTrailer && trailer ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&modestbranding=1&rel=0`}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : loading ? (
+                  <div className="w-full h-full bg-white/[0.03] animate-pulse flex flex-col justify-end p-10 gap-4">
+                    <div className="h-12 w-2/5 bg-white/[0.04] rounded-xl" />
+                    <div className="flex gap-2">
+                      {[...Array(6)].map((_, idx) => (
+                        <div key={idx} className="h-8 w-16 bg-white/[0.04] rounded-full" />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <img
+                      src={getBackdropUrl(displayData.backdrop_path ?? displayData.poster_path)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 pointer-events-none"
+                      style={{ background: 'linear-gradient(to top, #0a0a0c 0%, rgba(10,10,12,0.4) 40%, transparent 100%)' }} />
+                  </>
+                )}
+
+                {/* Typography and Metadata Capsule Overlay Section */}
+                {!showTrailer && !loading && (
+                  <div className="absolute inset-x-0 bottom-0 px-8 md:px-10 pb-6 z-10 flex flex-col gap-4">
+                    <div>
+                      {logoPath ? (
+                        <img
+                          src={`${LOGO_BASE}${logoPath}`}
+                          alt=""
+                          className="max-h-[64px] md:max-h-[85px] object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]"
+                        />
+                      ) : (
+                        <h2 
+                          className="text-[34px] md:text-[50px] font-bold tracking-tight leading-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]" 
+                          style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+                        >
+                          {title}
+                        </h2>
+                      )}
+                    </div>
+
+                    {/* Exact 6-Pill Structural Metadata Array Row */}
+                    <div className="flex items-center gap-2 flex-wrap" style={{ fontFamily: '"Inter", sans-serif' }}>
+                      <div className={pillClass} style={liquidGlassStyle}>
+                        <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
+                        <span>{displayData.vote_average?.toFixed(1) || '7.4'}</span>
+                      </div>
+
+                      <div className={pillClass} style={liquidGlassStyle}>
+                        <Calendar size={12} className="text-white/60 shrink-0" />
+                        <span>{year}</span>
+                      </div>
+
+                      <div className={pillClass} style={liquidGlassStyle}>
+                        {isTV ? <Tv size={12} className="text-white/60 shrink-0" /> : <Clock size={12} className="text-white/60 shrink-0" />}
+                        <span>{runtime}</span>
+                      </div>
+
+                      <div className={pillClass} style={getRatingStyle(cert)}>
+                        <span className="tracking-wider">{cert}</span>
+                      </div>
+
+                      <div className={pillClass} style={liquidGlassStyle}>
+                        <span>{details?.genres?.[0]?.name || 'Action'}</span>
+                      </div>
+
+                      <div className={pillClass} style={liquidGlassStyle}>
+                        <span>{details?.genres?.[1]?.name || 'Cinematic'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Core Action Buttons Utilities Bar ── */}
+              {!loading && (
+                <div className="px-8 md:px-10 pt-6 pb-4 flex items-center gap-3 flex-wrap" style={{ fontFamily: '"Inter", sans-serif' }}>
+                  <motion.button
+                    onClick={() => {
+                      setPlayerMedia({ id: selectedMedia.id, type: mediaType, season: 1, episode: 1 });
+                      setIsPlayerOpen(true);
+                      setIsModalOpen(false);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="h-[40px] px-6 rounded-full flex items-center gap-2 cursor-pointer shadow-md"
+                    style={liquidGlassStyle}
+                  >
+                    <Play size={14} className="fill-white text-white shrink-0" />
+                    <span className="text-white text-[14px] font-bold">Play</span>
+                  </motion.button>
+
+                  {trailer && (
+                    <motion.button
+                      onClick={() => setShowTrailer(t => !t)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="h-[40px] px-6 rounded-full text-white text-[14px] font-bold flex items-center gap-2 cursor-pointer transition-all"
+                      style={liquidGlassStyle}
+                    >
+                      <Film size={14} className="shrink-0" />
+                      <span>{showTrailer ? 'Close' : 'Trailer'}</span>
+                    </motion.button>
+                  )}
+
+                  <motion.button
+                    onClick={() => inWatchlist ? removeFromWatchlist(selectedMedia.id) : addToWatchlist(selectedMedia)}
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.94 }}
+                    className="w-[40px] h-[40px] rounded-full flex items-center justify-center cursor-pointer transition-all shadow-md"
+                    style={{
+                      ...liquidGlassStyle,
+                      ...(inWatchlist ? { background: 'rgba(239,68,68,0.16)', borderColor: 'rgba(239,68,68,0.4)' } : {}),
+                    }}
+                  >
+                    <Bookmark size={15} className={inWatchlist ? 'fill-current text-red-400' : 'text-white'} />
+                  </motion.button>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
-              <div className="flex flex-wrap gap-4 mb-8">
-                <button
-                  onClick={() => {
-                    setPlayerMedia({ id: selectedMedia.id, type: mediaType });
-                    setIsPlayerOpen(true);
-                  }}
-                  className="bg-white text-black px-8 py-3 rounded-md font-semibold text-sm hover:bg-gray-200"
-                >
-                  Watch Now
-                </button>
-                <button
-                  onClick={() => inWatchlist ? removeFromWatchlist(selectedMedia.id) : addToWatchlist(selectedMedia)}
-                  className="bg-white/10 text-white px-8 py-3 rounded-md font-semibold text-sm hover:bg-white/20 border border-white/10"
-                >
-                  {inWatchlist ? 'Saved to Watchlist' : 'Add to Watchlist'}
-                </button>
+              {/* ── Content Description Block ── */}
+              <div className="px-8 md:px-10 py-3">
+                {loading ? (
+                  <div className="space-y-2.5 max-w-2xl animate-pulse">
+                    <div className="h-4 w-full bg-white/[0.03] rounded" />
+                    <div className="h-4 w-11/12 bg-white/[0.03] rounded" />
+                    <div className="h-4 w-4/5 bg-white/[0.03] rounded" />
+                  </div>
+                ) : (
+                  <p 
+                    className="text-white/65 text-[15px] md:text-[16px] leading-relaxed max-wxl font-serif tracking-normal"
+                    style={{ fontFamily: '"New York Medium", Georgia, Cambria, serif' }}
+                  >
+                    {displayData.overview || 'No description available for this layout title summary configuration.'}
+                  </p>
+                )}
               </div>
 
-              <p className="text-white/70 text-lg leading-relaxed mb-10 max-w-3xl">
-                {displayData.overview || 'No description available.'}
-              </p>
-
-              {/* Cast Row */}
-              {cast.length > 0 && (
-                <div className="mb-10">
-                  <h3 className="text-white font-semibold mb-4">Cast</h3>
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide">
-                    {cast.map(actor => (
-                      <div key={actor.id} className="flex-shrink-0 w-24">
-                        <div className="w-24 h-24 rounded-full overflow-hidden bg-white/5 mb-2">
-                           <img src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} className="w-full h-full object-cover" />
+              {/* ── Cast Row ── */}
+              {!loading && cast.length > 0 && (
+                <div className="px-8 md:px-10 pt-6 border-t border-white/[0.06] mt-6" style={{ fontFamily: '"Inter", sans-serif' }}>
+                  <h3 className="text-white text-[17px] font-bold tracking-wide mb-4">Cast</h3>
+                  <div className="flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
+                    {cast.map((actor: any) => (
+                      <div key={actor.id} className="flex-shrink-0 w-[135px] flex flex-col gap-2">
+                        <div className="w-[135px] aspect-[3/4] rounded-xl overflow-hidden bg-white/[0.02] border border-white/[0.08]">
+                          {actor.profile_path ? (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/10 text-xs">👤</div>
+                          )}
                         </div>
-                        <p className="text-xs text-center text-white/80">{actor.name}</p>
+                        <p 
+                          className="text-white/70 text-[12px] font-semibold text-center px-0.5 truncate tracking-wide"
+                          style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+                        >
+                          {actor.name}
+                        </p>
                       </div>
                     ))}
                   </div>

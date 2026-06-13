@@ -1,22 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Star, Clapperboard, Rocket, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import { MediaExhibitionDeck } from '../components/MediaExhibitionDeck';
-import { getPopularMovies, getTopRatedMovies, getNowPlaying, getUpcomingMovies } from '../lib/tmdb';
+import { ChevronLeft, ChevronRight, ChevronDown, Play, Plus, Check, Info } from 'lucide-react';
+import { getPopularMovies, getTopRatedMovies, getNowPlaying, getUpcomingMovies, getBackdropUrl, getMovieDetails } from '../lib/tmdb';
+import { useStore } from '../store/useStore';
 
 const TABS = [
-  { id: 'popular', label: 'Popular', icon: Flame },
-  { id: 'top_rated', label: 'Top rated', icon: Star },
-  { id: 'now_playing', label: 'In theaters', icon: Clapperboard },
-  { id: 'upcoming', label: 'Coming soon', icon: Rocket },
+  { id: 'popular', label: 'Popular' },
+  { id: 'top_rated', label: 'Top rated' },
+  { id: 'now_playing', label: 'In theaters' },
+  { id: 'upcoming', label: 'Coming soon' },
 ];
+
+const LOGO_BASE = 'https://image.tmdb.org/t/p/w500';
 
 const MoviesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('popular');
   const [deckIndex, setDeckIndex] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic tracking variables to hold logo strings extracted from the secondary append layer
+  const [currentLogoPath, setCurrentLogoPath] = useState<string | null>(null);
+
+  const { 
+    addToWatchlist, 
+    removeFromWatchlist, 
+    isInWatchlist, 
+    setPlayerMedia, 
+    setIsPlayerOpen,
+    setIsModalOpen,
+    setSelectedMedia 
+  } = useStore();
 
   const { data: popular, isLoading: l1 } = useQuery({ queryKey: ['movies', 'popular'], queryFn: () => getPopularMovies(1), enabled: activeTab === 'popular' });
   const { data: topRated, isLoading: l2 } = useQuery({ queryKey: ['movies', 'top_rated'], queryFn: () => getTopRatedMovies(1), enabled: activeTab === 'top_rated' });
@@ -30,9 +45,29 @@ const MoviesPage: React.FC = () => {
   const isLoading = loadingMap[activeTab];
   const movies = currentData?.results?.slice(0, 12).map(m => ({ ...m, media_type: 'movie' })) || [];
 
+  const currentMovie = movies[deckIndex];
+
+  // Secondary sub-effect resolution layer fetching full asset arrays to parse network logos matching HeroBanner styles
+  useEffect(() => {
+    if (!currentMovie) return;
+    setCurrentLogoPath(null);
+
+    (async () => {
+      try {
+        const detailPayload = await getMovieDetails(currentMovie.id);
+        const logos = (detailPayload as any).images?.logos || [];
+        const englishLogo = logos.find((l: any) => l.iso_639_1 === 'en') || logos[0] || null;
+        if (englishLogo) {
+          setCurrentLogoPath(englishLogo.file_path);
+        }
+      } catch (err) {
+        console.error("Failed fetching structural logo layers:", err);
+      }
+    })();
+  }, [currentMovie?.id]);
+
   useEffect(() => { setDeckIndex(0); }, [activeTab]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,122 +83,219 @@ const MoviesPage: React.FC = () => {
 
   const activeTabLabel = TABS.find(t => t.id === activeTab)?.label || 'Select';
 
+  // Uniform translucent liquid glass style dictionary
   const liquidGlassStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    backdropFilter: 'blur(32px) saturate(160%)',
-    WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-    border: '1px solid rgba(255, 255, 255, 0.07)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backdropFilter: 'blur(24px) saturate(140%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
   };
 
   return (
-    <div className="h-screen w-full pt-24 pb-8 bg-[#020204] text-white overflow-hidden flex flex-col justify-start gap-6" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
-      
-      {/* Golden Proportional Balanced Header Row */}
-      <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between px-6 md:px-0 shrink-0 relative z-50">
-        
-        {/* Left Side: Page Title */}
-        <h1 className="text-4xl font-black tracking-tighter uppercase text-white font-sans md:w-[250px] text-left">
-          Movies
-        </h1>
-
-        {/* Center Focus: Golden Ratio Glassmorphic Dropdown Trigger */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            style={liquidGlassStyle}
-            className="px-6 py-3.5 rounded-2xl font-bold text-sm tracking-wide text-white hover:bg-white/0.05 transition-all flex items-center gap-3 cursor-pointer shadow-xl min-w-[200px] justify-between transform active:scale-98"
+    <div 
+      className="h-screen w-full bg-[#020204] text-white relative select-none flex flex-col justify-between overflow-hidden animate-fade-in"
+      style={{ 
+        fontFamily: 'Helvetica, Arial, sans-serif',
+        paddingTop: '4.236rem',
+        paddingBottom: '4.236rem'
+      }}
+    >
+      {/* ── Immersive Cinematic Blurred Poster Background Layer ── */}
+      <AnimatePresence mode="wait">
+        {currentMovie && !isLoading && (
+          <motion.div 
+            key={`bg-${currentMovie.id}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.35 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="absolute inset-0 w-full h-full pointer-events-none z-0"
           >
-            <span className="font-sans">{activeTabLabel}</span>
-            <ChevronDown size={16} className={`transform transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+            <img 
+              src={getBackdropUrl(currentMovie.backdrop_path || currentMovie.poster_path)} 
+              alt="" 
+              className="w-full h-full object-cover blur-md scale-105 pointer-events-none select-none"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#020204] via-transparent to-[#020204]/70" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Glassmorphic Options Dropdown Menu Panel */}
-          <AnimatePresence>
-            {isDropdownOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 4, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-                style={liquidGlassStyle}
-                className="absolute left-0 right-0 overflow-hidden rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.9)] bg-[#07070a]/90"
-              >
-                <div className="p-1 flex flex-col gap-0.5">
-                  {TABS.map(tab => {
-                    const Icon = tab.icon;
-                    const isActive = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => { setActiveTab(tab.id); setIsDropdownOpen(false); }}
-                        className={`px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 w-full text-left cursor-pointer ${
-                          isActive ? 'text-black bg-white' : 'text-white/50 hover:text-white hover:bg-white/5'
-                        }`}
-                      >
-                        <Icon size={14} className={isActive ? 'text-black' : 'text-white/30'} />
-                        <span className="font-sans">{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Right Side: Proportional Counter Component */}
-        <div className="text-right md:w-[250px]">
-          {!isLoading && movies.length > 0 && (
-            <div className="text-base font-bold text-white/40 tracking-wider font-sans">
-              <span className="text-white font-black">{(deckIndex + 1).toString().padStart(2, '0')}</span> / {movies.length.toString().padStart(2, '0')}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main Exhibition Deck Stage */}
-      <div className="relative w-full flex items-center justify-center grow overflow-hidden px-4 md:px-12 mt-2">
+      {/* ── Main Layout Wrapper matching Card alignment constraints ── */}
+      <div className="w-full max-w-[1360px] mx-auto px-4 flex-1 flex flex-col justify-between min-h-0 relative z-10">
         
-        {/* LEFT Flank Large Button */}
-        <button 
-          onClick={prevCard} 
-          disabled={deckIndex === 0}
-          style={liquidGlassStyle}
-          className="absolute left-6 md:left-12 z-30 p-5 md:p-6 rounded-full transition-all text-white disabled:opacity-0 disabled:pointer-events-none hover:bg-white/10 hover:border-white/20 active:scale-90 cursor-pointer hidden sm:block shadow-2xl"
-        >
-          <ChevronLeft size={24} />
-        </button>
+        {/* ── Page Header Controls Row ── */}
+        <div className="w-full flex items-center justify-between mb-4 relative z-50 shrink-0 px-16">
+          <h1 
+            className="text-[36px] md:text-[40px] font-bold tracking-tight text-white/95 text-left shrink-0"
+            style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+          >
+            Movies
+          </h1>
 
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <div className="w-full max-w-[1200px] aspect-video bg-white/0.01 border border-white/5 rounded-3xl animate-pulse" />
-          ) : movies.length > 0 ? (
-            <div className="w-full overflow-visible flex justify-center items-center">
-              <div 
-                className="w-full max-w-[1200px] flex justify-start items-center transition-transform duration-500 ease-out" 
-                style={{ transform: `translateX(calc(-${deckIndex * 100}% - ${deckIndex * 32}px))` }}
-              >
-                {movies.map((movie, idx) => (
-                  <div key={movie.id} className="w-full shrink-0 mr-8 last:mr-0">
-                    <MediaExhibitionDeck movie={movie} isActive={idx === deckIndex} />
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
+              className="px-6 py-3 rounded-[0.618rem] font-bold text-sm tracking-wide text-white hover:bg-white/10 transition-all flex items-center gap-3 cursor-pointer min-w-[210px] justify-between transform active:scale-98"
+            >
+              <span>{activeTabLabel}</span>
+              <ChevronDown size={16} className={`transform transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 4, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                  style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
+                  className="absolute right-0 top-full overflow-hidden rounded-[0.618rem] bg-[#07070a]/95 w-[210px] z-50"
+                >
+                  <div className="p-1.5 flex flex-col gap-0.5">
+                    {TABS.map(tab => {
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => { 
+                            setActiveTab(tab.id); 
+                            setIsDropdownOpen(false); 
+                          }}
+                          className={`px-4 py-2.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 w-full text-left cursor-pointer ${
+                            isActive ? 'text-black bg-white font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </AnimatePresence>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
-        {/* RIGHT Flank Large Button */}
-        <button 
-          onClick={nextCard} 
-          disabled={deckIndex === movies.length - 1}
-          style={liquidGlassStyle}
-          className="absolute right-6 md:right-12 z-30 p-5 md:p-6 rounded-full transition-all text-white disabled:opacity-0 disabled:pointer-events-none hover:bg-white/10 hover:border-white/20 active:scale-90 cursor-pointer hidden sm:block shadow-2xl"
-        >
-          <ChevronRight size={24} />
-        </button>
+        {/* ── Main Stage Area ── */}
+        <div className="w-full flex-1 flex items-center justify-between relative min-h-0">
+          
+          {/* Left Flank Navigation Pill Button (Scaled to 50%) */}
+          <div className="w-12 shrink-0 flex items-center justify-start z-30">
+            <button
+              onClick={prevCard}
+              disabled={deckIndex === 0 || isLoading}
+              style={liquidGlassStyle}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-0 disabled:pointer-events-none shadow-xl"
+            >
+              <ChevronLeft size={18} />
+            </button>
+          </div>
+
+          {/* Center Frame Space */}
+          <div className="flex-1 aspect-video max-w-[1200px] relative mx-4 z-10 my-auto">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <div className="w-full h-full bg-white/5 rounded-2xl animate-pulse" />
+              ) : currentMovie ? (
+                <motion.div
+                  key={`${activeTab}-${deckIndex}`}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
+                  className="w-full h-full relative rounded-2xl overflow-hidden bg-[#0a0a0c] border border-white/[0.04] shadow-2xl"
+                >
+                  <img 
+                    src={getBackdropUrl(currentMovie.backdrop_path || currentMovie.poster_path)} 
+                    alt="" 
+                    className="w-full h-full object-cover pointer-events-none absolute inset-0 select-none"
+                  />
+
+                  <div 
+                    className="absolute inset-0 pointer-events-none z-20"
+                    style={{
+                      background: 'linear-gradient(to top, rgba(2, 2, 4, 0.9) 0%, rgba(2, 2, 4, 0.4) 40%, transparent 100%), linear-gradient(to right, rgba(2, 2, 4, 0.7) 0%, transparent 50%)'
+                    }}
+                  />
+
+                  {/* Custom Overlay Interface Elements */}
+                  <div className="absolute bottom-16 left-16 z-40 flex flex-col gap-6 items-start text-left max-w-4xl">
+                    
+                    {/* Actual Movie Logo Asset Container */}
+                    <div className="min-h-[96px] md:min-h-[128px] flex items-end">
+                      {currentLogoPath ? (
+                        <img 
+                          src={`${LOGO_BASE}${currentLogoPath}`}
+                          alt={currentMovie.title || currentMovie.name}
+                          className="max-h-[110px] md:max-h-[150px] object-contain select-none pointer-events-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
+                        />
+                      ) : (
+                        <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                          {currentMovie.title || currentMovie.name}
+                        </h2>
+                      )}
+                    </div>
+
+                    {/* Action Cluster Row (Pills Scaled to 50% with Helvetica rules applied) */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          setPlayerMedia({ id: currentMovie.id, type: 'movie' });
+                          setIsPlayerOpen(true);
+                        }}
+                        style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
+                        className="h-[40px] px-5 rounded-full text-white font-bold text-sm tracking-wide flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95 cursor-pointer shadow-xl"
+                      >
+                        <Play size={14} className="fill-current text-white" />
+                        <span>Play</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSelectedMedia(currentMovie);
+                          setIsModalOpen(true);
+                        }}
+                        style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
+                        className="h-[40px] px-4 rounded-full text-white font-bold text-sm tracking-wide flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95 cursor-pointer shadow-xl"
+                      >
+                        <Info size={14} className="text-white" />
+                        <span>Info</span>
+                      </button>
+
+                      <button
+                        onClick={() => isInWatchlist(currentMovie.id) ? removeFromWatchlist(currentMovie.id) : addToWatchlist(currentMovie)}
+                        style={{
+                          ...liquidGlassStyle,
+                          width: '40px',
+                          height: '40px'
+                        }}
+                        className="rounded-full flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer hover:bg-white/10 shadow-xl"
+                      >
+                        {isInWatchlist(currentMovie.id) ? <Check size={14} className="text-green-400" /> : <Plus size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+
+          {/* Right Flank Navigation Pill Button (Scaled to 50%) */}
+          <div className="w-12 shrink-0 flex items-center justify-end z-30">
+            <button
+              onClick={nextCard}
+              disabled={deckIndex === movies.length - 1 || movies.length === 0 || isLoading}
+              style={liquidGlassStyle}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-0 disabled:pointer-events-none shadow-xl"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+        </div>
       </div>
-
     </div>
   );
 };

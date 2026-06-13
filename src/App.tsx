@@ -8,10 +8,12 @@ import MoviesPage from './components/MoviesPage';
 import SeriesPage from './components/SeriesPage';
 import SearchPage from './components/SearchPage';
 import GenresPage from './components/GenresPage';
+import WatchlistPage from './components/WatchlistPage';
 import MediaModal from './components/MediaModal';
 import VideoPlayer from './components/VideoPlayer';
-import WatchlistPage from './components/WatchlistPage';
-
+import Toast from './components/Toast';
+import Footer from './components/Footer';
+import BackToTop from './components/BackToTop';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,110 +29,58 @@ const queryClient = new QueryClient({
 const AppContent: React.FC = () => {
   const { activeTab } = useStore();
 
-  const pages = {
+  const pages: Record<string, React.ReactElement> = {
     home: <HomePage />,
     movies: <MoviesPage />,
     series: <SeriesPage />,
-    genres: <GenresPage />,
     search: <SearchPage />,
+    genres: <GenresPage />,
     watchlist: <WatchlistPage />,
-    list: <div className="pt-32 text-center">Your Curated List Canvas</div> // Swap with <WatchlistPage /> later
   };
 
   return (
-    <div
-      className="relative min-h-screen text-white"
-      style={{ fontFamily: 'Outfit, Inter, sans-serif', background: '#0a0a0a' }}
-    >
-      {/* ── Ambient Glow — Warm Amber ── */}
+    <div className="relative min-h-screen bg-[#050508] text-white" style={{ fontFamily: 'Outfit, Inter, sans-serif' }}>
+      {/* Ambient Background Glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Top-left amber blob */}
-        <div
-          className="absolute -top-60 -left-60 w-[800px] h-[800px] rounded-full animate-float"
-          style={{
-            background: 'radial-gradient(circle, rgba(180,90,0,0.18) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-            animationDuration: '14s',
-          }}
-        />
-        {/* Mid-right warm glow */}
-        <div
-          className="absolute top-1/4 -right-60 w-[700px] h-[700px] rounded-full animate-float"
-          style={{
-            background: 'radial-gradient(circle, rgba(150,70,0,0.12) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-            animationDuration: '18s',
-            animationDelay: '-6s',
-          }}
-        />
-        {/* Bottom subtle warm */}
-        <div
-          className="absolute -bottom-60 left-1/3 w-[700px] h-[700px] rounded-full animate-float"
-          style={{
-            background: 'radial-gradient(circle, rgba(120,55,0,0.10) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-            animationDuration: '20s',
-            animationDelay: '-10s',
-          }}
-        />
+        <div className="absolute -top-40 -left-40 w-[700px] h-[700px] bg-red-600/10 rounded-full blur-[140px] animate-float" style={{ animationDuration: '12s' }} />
+        <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-rose-600/8 rounded-full blur-[120px] animate-float" style={{ animationDuration: '15s' }} />
+        <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-red-900/10 rounded-full blur-[140px] animate-float" style={{ animationDuration: '18s' }} />
       </div>
 
-      {/* Navbar */}
       <Navbar />
 
-      {/* Page Content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
           {pages[activeTab]}
         </motion.div>
       </AnimatePresence>
 
+      <Footer />
+
       {/* Global Overlays */}
       <MediaModal />
       <VideoPlayer />
+      <Toast />
+      <BackToTop />
 
-      {/* Bottom accent line */}
-      <div
-        className="fixed bottom-0 left-0 right-0 h-px opacity-30"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.6), transparent)' }}
-      />
+      {/* Bottom accent */}
+      <div className="fixed bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-400 opacity-40" />
     </div>
   );
 };
 
-const App: React.FC = () => (
-  <QueryClientProvider client={queryClient}>
-    <AppContent />
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
+};
 
 export default App;
-
-<div className="relative min-h-screen bg-[#050507] overflow-x-hidden text-white antialiased selection:bg-white/10">
-      
-      {/* ── Premium High-Contrast Liquid Ambient Glow Blobs ── */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1400px] h-[600px] pointer-events-none select-none z-0 overflow-hidden opacity-45 mix-blend-screen">
-        {/* Left Amber/Gold Refraction Layer */}
-        <div 
-          className="absolute -top-[20%] left-[-10%] w-[600px] h-[500px] rounded-full bg-linear-to-br from-amber-600/40 via-orange-500/20 to-transparent blur-[120px] animate-pulse"
-          style={{ animationDuration: '8s' }}
-        />
-        {/* Right Saturated Complementary Warm Accent */}
-        <div 
-          className="absolute -top-[15%] right-[-5%] w-[500px] h-[450px] rounded-full bg-linear-to-bl from-yellow-600/30 via-amber-500/10 to-transparent blur-[100px] animate-pulse"
-          style={{ animationDuration: '12s' }}
-        />
-      </div>
-
-      {/* Your Navbar and Active Page components render naturally underneath */}
-      <Navbar />
-      <main className="relative z-10">
-        {/* Page Content */}
-      </main>
-    </div>

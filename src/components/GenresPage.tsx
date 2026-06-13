@@ -64,12 +64,30 @@ const GenresPage: React.FC = () => {
     fetchMovies();
   }, [selectedGenre, mediaFilter, selectedSort]);
 
+  // Golden Ratio Proportion Matrix (Base Scale Anchor = 1rem or 16px)
+  // φ = 1.61803398875...
+  const scale = {
+    cardGapX: '1.03rem',     // ~16.5px (Proportional Grid separation mapping)
+    cardGapY: '1.618rem',    // ~26px (φ factor vertical rhythm balancing)
+    padX: '2.618rem',       // ~42px (φ² side container margins)
+    padY: '4.236rem',       // ~68px (φ³ bottom clearance anchors)
+    topSpaced: '8.472rem',  // ~135px (φ⁴ top layout system drop context)
+    maxBoundary: '104.9rem' // ~1678px (Golden proportional horizontal viewing clip)
+  };
+
+  const globalDropdownGlassClass = "absolute top-full mt-[0.618rem] bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08] rounded-[0.618rem] p-[0.618rem] shadow-2xl z-50 overflow-hidden";
+
   return (
     <div 
-      className="min-h-screen pt-32 px-6 md:px-12 pb-24 max-w-[1600px] mx-auto text-white select-none relative"
+      className="min-h-screen relative text-white select-none mx-auto"
       style={{
-        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif',
+        fontFamily: 'Helvetica, Arial, sans-serif',
         WebkitFontSmoothing: 'antialiased',
+        maxWidth: scale.maxBoundary,
+        paddingTop: scale.topSpaced,
+        paddingLeft: scale.padX,
+        paddingRight: scale.padX,
+        paddingBottom: scale.padY,
       }}
     >
       {/* Click-away layer to safely close open boxes */}
@@ -78,27 +96,36 @@ const GenresPage: React.FC = () => {
       )}
 
       {/* ── Page Header ── */}
-      <div className="flex items-center justify-between mb-8 relative z-50">
-        <h1 className="text-4xl md:text-[44px] font-extrabold tracking-tight text-white/95">
+      <div className="flex items-center justify-between mb-[2.618rem] relative z-50">
+        {/* Fixed Title Font: Replaced New York Serif with Helvetica styles */}
+        <h1 
+          className="text-4xl md:text-[44px] font-bold tracking-tight text-white/95"
+          style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+        >
           Discover
         </h1>
         
         {/* Right Filtering Dock */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-[0.618rem]">
           {/* Custom Format Dropdown Menu */}
           <div className="relative">
             <button 
               onClick={() => setActiveDropdown(activeDropdown === 'media' ? null : 'media')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer"
+              className="flex items-center gap-[0.618rem] px-[1.236rem] py-[0.764rem] rounded-[0.618rem] text-sm font-semibold text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer"
             >
               <span>{mediaFilter === 'movie' ? 'Movies' : 'Series'}</span>
               <ChevronDown size={14} className="opacity-60" />
             </button>
             <AnimatePresence>
               {activeDropdown === 'media' && (
-                <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute right-0 top-full mt-2 bg-[#0e0e11]/95 backdrop-blur-2xl border border-white/10 rounded-xl p-1.5 shadow-2xl z-50 w-36">
+                <motion.div 
+                  initial={{ opacity: 0, y: 4 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: 4 }} 
+                  className={`${globalDropdownGlassClass} right-0 w-[9.27rem]`}
+                >
                   {(['movie', 'tv'] as const).map(type => (
-                    <button key={type} onClick={() => { setMediaFilter(type); setActiveDropdown(null); }} className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg flex justify-between items-center ${mediaFilter === type ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}>
+                    <button key={type} onClick={() => { setMediaFilter(type); setActiveDropdown(null); }} className={`w-full text-left px-[0.764rem] py-[0.472rem] text-xs font-semibold rounded-[0.382rem] flex justify-between items-center ${mediaFilter === type ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'}`}>
                       <span>{type === 'movie' ? 'Movies' : 'Series'}</span>
                       {mediaFilter === type && <Check size={12} />}
                     </button>
@@ -111,22 +138,27 @@ const GenresPage: React.FC = () => {
       </div>
 
       {/* ── Liquid Glass Filter Hub ── */}
-      <div className="flex flex-wrap items-center gap-3 mb-10 relative z-40">
+      <div className="flex flex-wrap items-center gap-[0.618rem] mb-[2.618rem] relative z-40">
         
         {/* Genre Selector */}
         <div className="relative">
           <button 
             onClick={() => setActiveDropdown(activeDropdown === 'genre' ? null : 'genre')}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 flex items-center gap-2 cursor-pointer transition-all"
+            className="px-[1.236rem] py-[0.764rem] rounded-[0.618rem] text-xs font-bold text-white/90 bg-white/5 border border-white/10 hover:bg-white/10 flex items-center gap-[0.472rem] cursor-pointer transition-all"
           >
             <span>{selectedGenre?.name || 'Genres'}</span>
             <ChevronDown size={12} className="opacity-40" />
           </button>
           <AnimatePresence>
             {activeDropdown === 'genre' && (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute left-0 top-full mt-2 bg-[#0e0e11]/95 backdrop-blur-2xl border border-white/10 rounded-xl p-1.5 shadow-2xl z-50 w-44 max-h-64 overflow-y-auto scrollbar-hide">
+              <motion.div 
+                initial={{ opacity: 0, y: 4 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: 4 }} 
+                className={`${globalDropdownGlassClass} left-0 w-[11.18rem] max-h-[16.18rem] overflow-y-auto scrollbar-hide`}
+              >
                 {genres.map(g => (
-                  <button key={g.id} onClick={() => { setSelectedGenre(g); setActiveDropdown(null); }} className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg flex justify-between items-center ${selectedGenre?.id === g.id ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5'}`}>
+                  <button key={g.id} onClick={() => { setSelectedGenre(g); setActiveDropdown(null); }} className={`w-full text-left px-[0.764rem] py-[0.472rem] text-xs font-bold rounded-[0.382rem] flex justify-between items-center ${selectedGenre?.id === g.id ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5'}`}>
                     <span>{g.name}</span>
                     {selectedGenre?.id === g.id && <Check size={12} />}
                   </button>
@@ -138,16 +170,21 @@ const GenresPage: React.FC = () => {
 
         {/* Providers Custom Overlay Box */}
         <div className="relative">
-          <button onClick={() => setActiveDropdown(activeDropdown === 'provider' ? null : 'provider')} className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/45 hover:text-white/80 bg-white/2 border border-white/5 flex items-center gap-2 cursor-pointer transition-all">
+          <button onClick={() => setActiveDropdown(activeDropdown === 'provider' ? null : 'provider')} className="px-[1.236rem] py-[0.764rem] rounded-[0.618rem] text-xs font-bold text-white/45 hover:text-white/80 bg-white/2 border border-white/5 flex items-center gap-[0.472rem] cursor-pointer transition-all">
             <span className={selectedProvider !== 'All Providers' ? 'text-white/90' : ''}>{selectedProvider}</span>
             <ChevronDown size={12} className="opacity-30" />
           </button>
           <AnimatePresence>
             {activeDropdown === 'provider' && (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute left-0 top-full mt-2 bg-[#0e0e11]/95 backdrop-blur-2xl border border-white/10 rounded-xl p-1.5 shadow-2xl z-50 w-48 max-h-60 overflow-y-auto scrollbar-hide">
-                <button onClick={() => { setSelectedProvider('All Providers'); setActiveDropdown(null); }} className="w-full text-left px-3 py-2 text-xs font-bold text-white/50 hover:bg-white/5 rounded-lg">All Providers</button>
+              <motion.div 
+                initial={{ opacity: 0, y: 4 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: 4 }} 
+                className={`${globalDropdownGlassClass} left-0 w-[12.36rem] max-h-[16.18rem] overflow-y-auto scrollbar-hide`}
+              >
+                <button onClick={() => { setSelectedProvider('All Providers'); setActiveDropdown(null); }} className="w-full text-left px-[0.764rem] py-[0.472rem] text-xs font-bold text-white/50 hover:bg-white/5 rounded-[0.382rem]">All Providers</button>
                 {platforms.map(p => (
-                  <button key={p} onClick={() => { setSelectedProvider(p); setActiveDropdown(null); }} className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg flex justify-between items-center ${selectedProvider === p ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5'}`}>
+                  <button key={p} onClick={() => { setSelectedProvider(p); setActiveDropdown(null); }} className={`w-full text-left px-[0.764rem] py-[0.472rem] text-xs font-bold rounded-[0.382rem] flex justify-between items-center ${selectedProvider === p ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5'}`}>
                     <span>{p}</span>
                     {selectedProvider === p && <Check size={12} />}
                   </button>
@@ -159,15 +196,20 @@ const GenresPage: React.FC = () => {
 
         {/* Sorting Custom Overlay Box */}
         <div className="relative">
-          <button onClick={() => setActiveDropdown(activeDropdown === 'sort' ? null : 'sort')} className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/45 hover:text-white/80 bg-white/2 border border-white/5 flex items-center gap-2 cursor-pointer transition-all">
+          <button onClick={() => setActiveDropdown(activeDropdown === 'sort' ? null : 'sort')} className="px-[1.236rem] py-[0.764rem] rounded-[0.618rem] text-xs font-bold text-white/45 hover:text-white/80 bg-white/2 border border-white/5 flex items-center gap-[0.472rem] cursor-pointer transition-all">
             <span className={selectedSort !== 'Most Popular' ? 'text-white/90' : ''}>{selectedSort}</span>
             <ChevronDown size={12} className="opacity-30" />
           </button>
           <AnimatePresence>
             {activeDropdown === 'sort' && (
-              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} className="absolute left-0 top-full mt-2 bg-[#0e0e11]/95 backdrop-blur-2xl border border-white/10 rounded-xl p-1.5 shadow-2xl z-50 w-48">
+              <motion.div 
+                initial={{ opacity: 0, y: 4 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: 4 }} 
+                className={`${globalDropdownGlassClass} left-0 w-[12.36rem]`}
+              >
                 {sortingOptions.map(o => (
-                  <button key={o} onClick={() => { setSelectedSort(o); setActiveDropdown(null); }} className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg flex justify-between items-center ${selectedSort === o ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5'}`}>
+                  <button key={o} onClick={() => { setSelectedSort(o); setActiveDropdown(null); }} className={`w-full text-left px-[0.764rem] py-[0.472rem] text-xs font-bold rounded-[0.382rem] flex justify-between items-center ${selectedSort === o ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5'}`}>
                     <span>{o}</span>
                     {selectedSort === o && <Check size={12} />}
                   </button>
@@ -181,13 +223,21 @@ const GenresPage: React.FC = () => {
       {/* ── Catalog Results Canvas ── */}
       <div className="relative z-10">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-6">
+          /* Fixed Syntax Error: Swapped out non-JSX gap fields with unified properties */
+          <div 
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+            style={{ columnGap: scale.cardGapX, rowGap: scale.cardGapY }}
+          >
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="w-full aspect-2/3 rounded-2xl animate-pulse" style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }} />
+              <div key={i} className="w-full aspect-[2/3] rounded-[1.03rem] animate-pulse" style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-6">
+          /* Fixed Syntax Error: Swapped out non-JSX gap fields with unified properties */
+          <div 
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+            style={{ columnGap: scale.cardGapX, rowGap: scale.cardGapY }}
+          >
             {genreMovies.map((movie, i) => (
               <MediaCard key={movie.id} movie={{ ...movie, media_type: mediaFilter }} index={i} size="lg" />
             ))}

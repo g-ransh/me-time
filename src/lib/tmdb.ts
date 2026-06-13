@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { TMDBResponse, Movie, MovieDetails, Genre, SearchResult } from '../types';
 
+export const API_KEY = '043a45de34cc570b9ef0f18ee99aa867'; 
+export const BASE_URL = 'https://api.themoviedb.org/3';
+
 // Fallback configuration using VITE environment wrapper hooks
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '8265bd1679663a7ea12ac168da84d2e8';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
@@ -23,6 +26,7 @@ export const getImageUrl = (path: string | null, size: string = 'original'): str
 export const getPosterUrl = (path: string | null): string => getImageUrl(path, 'w500');
 export const getBackdropUrl = (path: string | null): string => getImageUrl(path, 'w1280');
 export const getThumbUrl = (path: string | null): string => getImageUrl(path, 'w342');
+export const getLogoUrl = (path: string | null): string => getImageUrl(path, 'w500');
 
 // ── Trending ──
 export const getTrending = async (mediaType: 'all' | 'movie' | 'tv' = 'all', timeWindow: 'day' | 'week' = 'week'): Promise<TMDBResponse<Movie>> => {
@@ -83,18 +87,18 @@ export const getUpcomingMovies = async (page = 1): Promise<TMDBResponse<Movie>> 
 };
 
 // ── Details ──
-export const getMovieDetails = async (id: number): Promise<MovieDetails> => {
-  const { data } = await tmdb.get(`/movie/${id}`, {
-    params: { append_to_response: 'videos,credits,similar,recommendations,external_ids' },
-  });
-  return data;
+export const getMovieDetails = async (id: number): Promise<any> => {
+  const response = await fetch(
+    `${BASE_URL}/movie/${id}?api_key=${API_KEY}&append_to_response=videos,credits,similar,recommendations,external_ids,images,release_dates,content_ratings`
+  );
+  return response.json();
 };
 
-export const getTVDetails = async (id: number): Promise<MovieDetails> => {
-  const { data } = await tmdb.get(`/tv/${id}`, {
-    params: { append_to_response: 'videos,credits,similar,recommendations,external_ids' },
-  });
-  return data;
+export const getTVDetails = async (id: number): Promise<any> => {
+  const response = await fetch(
+    `${BASE_URL}/tv/${id}?api_key=${API_KEY}&append_to_response=videos,credits,similar,recommendations,external_ids,images,release_dates,content_ratings`
+  );
+  return response.json();
 };
 
 /**

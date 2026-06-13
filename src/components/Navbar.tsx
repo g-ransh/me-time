@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Film, Home, Compass, Settings, Bell, Users, MessageSquare, Tv } from 'lucide-react';
+import { Search, X, Film, Home, Compass, Settings, Bookmark, Tv } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { searchMulti } from '../lib/tmdb';
 import { SearchResult } from '../types';
@@ -61,105 +61,94 @@ const Navbar: React.FC = () => {
     { id: 'genres', label: 'Discover' },
   ];
 
+  // Restructured Fluid Water Baseline with an increased +25% blurring pass (20px)
+  const thinWaterStyle: React.CSSProperties = {
+    backgroundColor: scrolled ? 'rgba(12, 12, 14, 0.55)' : 'rgba(16, 16, 20, 0.3)',
+    backdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
+    fontFamily: '"Inter", sans-serif',
+  };
+
   return (
     <>
-      {/* ── Top Navbar: High-End Liquid Glassmorphism Dock ── */}
+      {/* ── Top Custom Fluid Navigation Dock ── */}
       <motion.header
         className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex justify-center w-auto max-w-[95vw]"
-        initial={{ y: -100, opacity: 0 }}
+        initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif',
-          WebkitFontSmoothing: 'antialiased',
-        }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        style={{ fontFamily: '"Inter", sans-serif' }}
       >
         <div
-          className="flex items-center gap-6 px-6 py-2.5 rounded-full transition-all duration-500 select-none"
-          style={{
-            // High-precision blending setup for true glass panel light refraction
-            backgroundColor: scrolled ? 'rgba(15, 15, 20, 0.45)' : 'rgba(20, 20, 25, 0.25)',
-            backgroundImage: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
-            backdropFilter: 'blur(35px) saturate(210%) brightness(110%)',
-            WebkitBackdropFilter: 'blur(35px) saturate(210%) brightness(110%)',
-            // Liquid edge highlight ring (replicates premium 3D physical glass bevels)
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 12px 40px -10px rgba(0, 0, 0, 0.7)',
-          }}
+          className="flex items-center gap-[24px] px-[22px] py-2 rounded-full select-none border border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+          style={thinWaterStyle}
         >
-          {/* Logo element with premium ambient glare drop */}
+          {/* Movie Reel Logo Emblem Layout Anchor */}
           <motion.button
-            className="flex items-center justify-center w-8 h-8 rounded-full shrink-0"
+            className="flex items-center justify-center w-[30px] h-[30px] rounded-full shrink-0 text-white/80 hover:text-white"
             onClick={() => setActiveTab('home')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.08)', 
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)'
-            }}
           >
-            <span className="text-sm leading-none filter drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">🎥</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-[19px] h-[19px]">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="3" />
+              <circle cx="12" cy="7" r="1" fill="currentColor" />
+              <circle cx="12" cy="17" r="1" fill="currentColor" />
+              <circle cx="7" cy="12" r="1" fill="currentColor" />
+              <circle cx="17" cy="12" r="1" fill="currentColor" />
+            </svg>
           </motion.button>
 
-          {/* Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-7">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className="text-[13px] font-semibold tracking-normal transition-all duration-300 relative py-0.5"
-                style={{
-                  color: activeTab === item.id ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
-                  textShadow: activeTab === item.id ? '0 0 12px rgba(255,255,255,0.3)' : 'none',
-                }}
-                onMouseEnter={(e) => { if (activeTab !== item.id) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)'; }}
-                onMouseLeave={(e) => { if (activeTab !== item.id) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.45)'; }}
-              >
-                {item.label}
-                {activeTab === item.id && (
-                  <motion.span 
-                    layoutId="activeGlow"
-                    className="absolute -bottom-1 left-1 right-1 h-2px bg-white rounded-full shadow-[0_0_8px_#fff]"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
+          {/* Main Navigation Row — Golden Ratio Proportion Scaling Matrix */}
+          <nav className="hidden md:flex items-center gap-[24px]">
+            {navItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className="text-[14px] tracking-wide transition-all duration-200 relative py-0.5 cursor-pointer"
+                  style={{
+                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.38)',
+                    fontWeight: isActive ? 700 : 600,
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.38)'; }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Right Icon Dock Elements */}
-          <div className="flex items-center gap-3 text-white/45">
+          {/* Right Interface Utilities Section Block */}
+          <div className="flex items-center gap-3.5 text-white/35">
             
-            {/* Search Engine Dock Slider */}
+            {/* Search Input Box Area (Direct Search Navigation State Attachment Fixed) */}
             <div className="relative flex items-center">
               <AnimatePresence mode="wait">
                 {isSearchOpen ? (
                   <motion.div
                     key="input"
-                    initial={{ width: 32, opacity: 0 }}
-                    animate={{ width: 190, opacity: 1 }}
-                    exit={{ width: 32, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    initial={{ width: 30, opacity: 0 }}
+                    animate={{ width: 170, opacity: 1 }}
+                    exit={{ width: 30, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: 'easeInOut' }}
                     className="relative"
                   >
                     <div
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                      style={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                        backdropFilter: 'blur(20px) saturate(120%)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(120%)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                      }}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/[0.06]"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
                     >
                       <Search size={13} className="text-white/40 shrink-0" />
                       <input
                         ref={searchRef}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search items..."
-                        className="bg-transparent text-white text-xs placeholder-white/20 outline-none w-full py-0.5"
+                        placeholder="Search..."
+                        className="bg-transparent text-white text-[12px] placeholder-white/20 outline-none w-full font-semibold"
+                        style={{ fontFamily: '"Inter", sans-serif' }}
                         onKeyDown={(e) => {
                           if (e.key === 'Escape') closeSearch();
                           if (e.key === 'Enter' && searchQuery) {
@@ -168,44 +157,41 @@ const Navbar: React.FC = () => {
                           }
                         }}
                       />
-                      <button onClick={closeSearch} className="shrink-0">
-                        <X size={12} className="text-white/30 hover:text-white/70 transition-colors" />
+                      <button onClick={closeSearch} className="shrink-0 cursor-pointer">
+                        <X size={11} className="text-white/30 hover:text-white/70 transition-colors" />
                       </button>
                     </div>
 
-                    {/* Glassmorphic Auto-Suggestions */}
+                    {/* Auto-suggestions list panel */}
                     <AnimatePresence>
                       {suggestions.length > 0 && (
                         <motion.div
-                          initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                          initial={{ opacity: 0, y: 4, scale: 0.98 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                          className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 rounded-2xl overflow-hidden z-50 shadow-2xl p-1"
+                          exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-64 rounded-xl overflow-hidden z-50 shadow-xl p-1 border border-white/[0.06]"
                           style={{
-                            backgroundColor: 'rgba(15, 15, 20, 0.75)',
-                            backdropFilter: 'blur(40px) saturate(180%)',
-                            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.9)',
+                            backgroundColor: 'rgba(14, 14, 16, 0.98)',
+                            fontFamily: '"Inter", sans-serif',
                           }}
                         >
                           {suggestions.map((item, i) => (
                             <button
                               key={item.id}
                               onClick={() => handleSearchSelect(item)}
-                              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-white/5 transition-colors group"
-                              style={{ borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none' }}
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-white/5 transition-colors group cursor-pointer"
+                              style={{ borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.01)' : 'none' }}
                             >
-                              <div className="w-8 h-11 rounded-lg overflow-hidden shrink-0 bg-white/5 border border-white/5">
+                              <div className="w-7 h-10 rounded bg-white/5 border border-white/5 overflow-hidden shrink-0">
                                 {item.poster_path ? (
                                   <img src={getThumbUrl(item.poster_path)} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center"><Film size={12} className="text-white/20" /></div>
+                                  <div className="w-full h-full flex items-center justify-center"><Film size={11} className="text-white/20" /></div>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-white text-xs font-semibold truncate group-hover:text-white transition-colors">{getTitle(item)}</p>
-                                <p className="text-[10px] capitalize mt-0.5 text-white/30">{item.media_type}</p>
+                                <p className="text-white text-[12px] font-semibold truncate group-hover:text-white transition-colors">{getTitle(item)}</p>
+                                <p className="text-[10px] capitalize text-white/30 font-semibold">{item.media_type}</p>
                               </div>
                               {item.vote_average > 0 && (
                                 <span className="text-[10px] font-bold text-amber-500 shrink-0">★ {item.vote_average.toFixed(1)}</span>
@@ -219,87 +205,70 @@ const Navbar: React.FC = () => {
                 ) : (
                   <motion.button
                     key="icon"
-                    onClick={() => {
-                      // Navigate straight to your dedicated SearchPage canvas
-                      setActiveTab('search');
-                    }}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-white/5 ${
-                      activeTab === 'search' ? 'text-white bg-white/10' : 'text-white/45 hover:text-white'
+                    onClick={() => setActiveTab('search')}
+                    className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-white/5 cursor-pointer ${
+                      activeTab === 'search' ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'
                     }`}
-                    whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' } as any}
+                    whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.94 }}
                   >
-                    <Search size={14} />
+                    <Search size={15} />
                   </motion.button>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Utility Docks */}
+            {/* Watchlist Bookmark Capsule Shortcut — Exchanged to be first in order */}
             <motion.button
-              className="w-8 h-8 rounded-full items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5"
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' } as any}
+              onClick={() => setActiveTab('watchlist')}
+              className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-white/5 cursor-pointer ${
+                activeTab === 'watchlist' ? 'text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.4)]' : 'text-white/40 hover:text-white'
+              }`}
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.95 }}
+              title="Watchlist Directory"
             >
-              <Bell size={14} />
+              <Bookmark size={15} className={activeTab === 'watchlist' ? 'fill-current text-white' : ''} />
             </motion.button>
 
+            {/* Config Node — Exchanged to be second in order */}
             <motion.button
-              className="w-8 h-8 rounded-full items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5"
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' } as any}
+              className="w-[34px] h-[34px] rounded-full flex items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5 cursor-pointer text-white/40"
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Settings size={14} />
+              <Settings size={15} />
             </motion.button>
 
-            <motion.button
-              className="w-8 h-8 rounded-full items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5"
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' } as any}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Users size={14} />
-            </motion.button>
-
-            <motion.button
-              className="w-8 h-8 rounded-full items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5"
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(8px)' } as any}
-              whileTap={{ scale: 0.95 }}
-            >
-              <MessageSquare size={14} />
-            </motion.button>
           </div>
         </div>
       </motion.header>
 
-      {/* ── Mobile Glass Tab Bar ── */}
-      <div className="md:hidden fixed bottom-5 left-4 right-4 z-40">
+      {/* ── Compact Mobile Bottom Tab Bar ── */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 z-40">
         <div
-          className="flex items-center justify-around py-2 rounded-2xl"
-          style={{
-            backgroundColor: 'rgba(15, 15, 20, 0.45)',
-            backgroundImage: 'linear-gradient(to top, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
-            backdropFilter: 'blur(35px) saturate(200%) brightness(105%)',
-            WebkitBackdropFilter: 'blur(35px) saturate(200%) brightness(105%)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 -10px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.12)',
-          }}
+          className="flex items-center justify-around py-2 rounded-xl border border-white/[0.05] shadow-md"
+          style={thinWaterStyle}
         >
           {[
-            { id: 'home' as const,   label: 'Home',     icon: Home },
+            { id: 'home' as const,   label: 'Home',    icon: Home },
             { id: 'movies' as const, label: 'Movies',   icon: Film },
             { id: 'series' as const, label: 'Series',   icon: Tv },
             { id: 'genres' as const, label: 'Discover', icon: Compass },
-          ].map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className="flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-all"
-              style={{ color: activeTab === id ? '#fff' : 'rgba(255,255,255,0.32)' }}
-            >
-              <Icon size={16} className={activeTab === id ? 'filter drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]' : ''} />
-              <span className="text-[10px] font-semibold tracking-wide">{label}</span>
-            </button>
-          ))}
+          ].map(({ id, label, icon: Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className="flex flex-col items-center gap-0.5 px-3 py-0.5 rounded-lg transition-all cursor-pointer"
+                style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.25)' }}
+              >
+                <Icon size={15} />
+                <span className="text-[10px] font-bold tracking-wide">{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </>

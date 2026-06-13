@@ -1,187 +1,215 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useRef } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import HeroBanner from './HeroBanner';
 import MediaRow from './MediaRow';
 import { useStore } from '../store/useStore';
 import {
   getTrending,
   getPopularMovies,
+  getTopRatedMovies,
   getNowPlaying,
+  getUpcomingMovies,
   getPopularTV,
+  getTopRatedTV,
+  getAiringToday,
 } from '../lib/tmdb';
 
-const SkeletonRow: React.FC = () => (
-  <div className="py-2 px-6 md:px-16 lg:px-24 max-w-[1400px] mx-auto">
-    <div className="h-6 w-40 rounded-md bg-white/5 animate-pulse mb-4" />
+const LAYOUT_PADDING = 'px-6 md:px-16';
+const MARGIN_STACK = 'my-8 md:my-12';
+const ELEMENT_GAP = 'mb-4';
+
+const MinimalSkeleton: React.FC = () => (
+  <div className={`${LAYOUT_PADDING} ${MARGIN_STACK} animate-pulse`}>
+    <div className={`h-5 w-36 rounded bg-[#222222] ${ELEMENT_GAP}`} />
     <div className="flex gap-4 overflow-hidden">
-      {Array.from({ length: 7 }).map((_, i) => (
-        <div key={i} className="w-[180px] h-[270px] rounded-2xl shrink-0 animate-pulse bg-white/5" />
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="w-[200px] h-[295px] rounded-xl bg-[#1A1A1A] flex-shrink-0" />
       ))}
     </div>
   </div>
 );
 
-const HomePage: React.FC = () => {
-  const { setActiveTab } = useStore();
+const PremiumFunctionalRow: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Core Data Storage Queries
-  const { data: trendingAll, isLoading: loadingTrending } = useQuery({
-    queryKey: ['trending', 'all', 'week'],
-    queryFn: () => getTrending('all', 'week'),
-  });
+  const scrollRow = (direction: 'left' | 'right') => {
+    if (containerRef.current) {
+      const track = containerRef.current.querySelector('.overflow-x-scroll') || 
+                    containerRef.current.querySelector('[class*="overflow-x"]') ||
+                    containerRef.current.querySelector('.flex');
 
-  const { data: trendingMovies } = useQuery({
-    queryKey: ['trending', 'movie', 'week'],
-    queryFn: () => getTrending('movie', 'week'),
-  });
-
-  const { data: trendingTV } = useQuery({
-    queryKey: ['trending', 'tv', 'week'],
-    queryFn: () => getTrending('tv', 'week'),
-  });
-
-  const { data: platformMovies } = useQuery({
-    queryKey: ['discover', 'movie', 'netflix-static'],
-    queryFn: async () => {
-      const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&with_watch_providers=8&watch_region=US`);
-      return res.json();
+      if (track) {
+        const viewWidth = track.clientWidth;
+        const scrollAmount = direction === 'left' ? -(viewWidth * 0.75) : (viewWidth * 0.75);
+        
+        track.scrollBy({ 
+          left: scrollAmount, 
+          behavior: 'smooth' 
+        });
+      }
     }
-  });
+  };
 
-  const { data: platformSeries } = useQuery({
-    queryKey: ['discover', 'tv', 'netflix-static'],
-    queryFn: async () => {
-      const res = await fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${import.meta.env.VITE_TMDB_API_KEY}&with_watch_providers=8&watch_region=US`);
-      return res.json();
-    }
-  });
-
-  const { data: nowPlaying } = useQuery({ queryKey: ['nowPlaying'], queryFn: () => getNowPlaying() });
-  const { data: popularMovies } = useQuery({ queryKey: ['popular', 'movie'], queryFn: () => getPopularMovies() });
-  const { data: popularTV } = useQuery({ queryKey: ['popular', 'tv'], queryFn: () => getPopularTV() });
-
-  const heroMovies = trendingAll?.results?.filter((m: any) => m.backdrop_path).slice(0, 5) || [];
+  const appleNewYorkFont = {
+    fontFamily: '"New York Medium", "New York", Georgia, Cambria, "Times New Roman", Times, serif'
+  };
 
   return (
-    <div 
-      className="relative min-h-screen bg-[#020204] text-white overflow-x-hidden flex flex-col justify-start pb-24 select-none"
-      style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
-    >
-      
-      {/* Hero Header Banner Slider Layer */}
-      {loadingTrending ? (
-        <div className="h-[80vh] w-full animate-pulse bg-white/5" />
-      ) : heroMovies.length > 0 ? (
-        <div className="w-full shrink-0 relative z-10">
-          <HeroBanner movies={heroMovies} />
+    <section className={`group relative ${LAYOUT_PADDING} ${MARGIN_STACK}`}>
+      {/* Optimized Title: Smooth base opacity shift that illuminates dynamically on container hover */}
+      <h2 
+        style={appleNewYorkFont}
+        className="text-2xl md:text-[27px] font-medium tracking-tight text-[#ededed]/80 transition-all duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] group-hover:text-white group-hover:text-[#ffffff] group-hover:opacity-100 antialiased mb-5"
+      >
+        {title}
+      </h2>
+
+      <div ref={containerRef} className="relative w-full">
+        {/* Left Floating Controller Switch - Deep backdrop-blur scattering and dynamic opacity scales */}
+        <button
+          onClick={() => scrollRow('left')}
+          className="absolute left-[-22px] top-1/2 -translate-y-1/2 z-30 hidden md:flex items-center justify-center w-10 h-10 rounded-full border border-white/[0.03] bg-[#141415]/60 text-[#9b9b9b]/80 backdrop-blur-3xl opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 hover:bg-[#1a1a1c]/80 hover:text-white hover:border-white/10 active:scale-90 shadow-[0_12px_40px_rgba(0,0,0,0.6)] cursor-pointer"
+          aria-label="Scroll Left"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-[15px] h-[15px]">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+
+        {/* Media Container Track Layer */}
+        <div className="w-full relative z-10">
+          {children}
         </div>
-      ) : null }
 
-      {/* Main Grid Shelf Layout */}
-      <div className="w-full max-w-[1400px] mx-auto px-6 md:px-16 lg:px-24 flex flex-col gap-12 mt-10 relative z-20">
-        {loadingTrending && <SkeletonRow />}
+        {/* Right Floating Controller Switch - Deep backdrop-blur scattering and dynamic opacity scales */}
+        <button
+          onClick={() => scrollRow('right')}
+          className="absolute right-[-22px] top-1/2 -translate-y-1/2 z-30 hidden md:flex items-center justify-center w-10 h-10 rounded-full border border-white/[0.03] bg-[#141415]/60 text-[#9b9b9b]/80 backdrop-blur-3xl opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 hover:bg-[#1a1a1c]/80 hover:text-white hover:border-white/10 active:scale-90 shadow-[0_12px_40px_rgba(0,0,0,0.6)] cursor-pointer"
+          aria-label="Scroll Right"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-[15px] h-[15px]">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+    </section>
+  );
+};
 
-        {/* Row 1: Trending Movies */}
-        {trendingMovies?.results && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-                Trending Movies
-              </h2>
-              <button 
-                onClick={() => setActiveTab('movies')}
-                className="text-xs text-white/45 hover:text-white transition-colors font-bold tracking-wide cursor-pointer uppercase"
-              >
-                View All
-              </button>
-            </div>
-            <MediaRow title="" movies={trendingMovies.results.map((m: any) => ({ ...m, media_type: 'movie' }))} />
-          </div>
-        )}
+const HomePage: React.FC = () => {
+  const { continueWatching } = useStore();
 
-        {/* Row 2: Trending Series */}
-        {trendingTV?.results && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-                Trending Series
-              </h2>
-              <button 
-                onClick={() => setActiveTab('series')}
-                className="text-xs text-white/45 hover:text-white transition-colors font-bold tracking-wide cursor-pointer uppercase"
-              >
-                View All
-              </button>
-            </div>
-            <MediaRow title="" movies={trendingTV.results.map((m: any) => ({ ...m, media_type: 'tv' }))} />
-          </div>
-        )}
+  const results = useQueries({
+    queries: [
+      { queryKey: ['trending', 'all', 'week'], queryFn: () => getTrending('all', 'week') },
+      { queryKey: ['popular', 'movie'], queryFn: () => getPopularMovies() },
+      { queryKey: ['topRated', 'movie'], queryFn: () => getTopRatedMovies() },
+      { queryKey: ['nowPlaying'], queryFn: () => getNowPlaying() },
+      { queryKey: ['upcoming'], queryFn: () => getUpcomingMovies() },
+      { queryKey: ['popular', 'tv'], queryFn: () => getPopularTV() },
+      { queryKey: ['topRated', 'tv'], queryFn: () => getTopRatedTV() },
+      { queryKey: ['airingToday'], queryFn: () => getAiringToday() },
+    ],
+  });
 
-        {/* Row 3: Movies on Netflix */}
-        {platformMovies?.results && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-                Movies on Netflix
-              </h2>
-              <button 
-                onClick={() => setActiveTab('movies')}
-                className="text-xs text-white/45 hover:text-white transition-colors font-bold tracking-wide cursor-pointer uppercase"
-              >
-                View All
-              </button>
-            </div>
-            <MediaRow title="" movies={platformMovies.results.map((m: any) => ({ ...m, media_type: 'movie' }))} />
-          </div>
-        )}
+  const [trendingQ, popularMoviesQ, topRatedMoviesQ, nowPlayingQ, upcomingQ, popularTVQ, topRatedTVQ, airingTodayQ] = results;
+  const isInitialLoading = trendingQ.isLoading;
 
-        {/* Row 4: Series on Netflix */}
-        {platformSeries?.results && (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-                Series on Netflix
-              </h2>
-              <button 
-                onClick={() => setActiveTab('series')}
-                className="text-xs text-white/45 hover:text-white transition-colors font-bold tracking-wide cursor-pointer uppercase"
-              >
-                View All
-              </button>
-            </div>
-            <MediaRow title="" movies={platformSeries.results.map((m: any) => ({ ...m, media_type: 'tv' }))} />
-          </div>
-        )}
+  const processedData = useMemo(() => {
+    const trendingResults = trendingQ.data?.results?.map((m: any) => ({ ...m, media_type: m.media_type || 'movie' })) || [];
+    const heroMovies = trendingResults.filter((m: any) => m.backdrop_path);
+    const continueMovies = continueWatching.map(c => ({ ...c.movie, media_type: c.type }));
+    const mapWithMedia = (data: any, type: 'movie' | 'tv') => data?.results?.map((m: any) => ({ ...m, media_type: type })) || [];
 
-        {/* Classic Media Rows */}
-        {nowPlaying?.results && (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-              In Theaters
-            </h2>
-            <MediaRow title="" movies={nowPlaying.results.map((m: any) => ({ ...m, media_type: 'movie' }))} />
-          </div>
-        )}
+    return {
+      heroMovies,
+      continueMovies,
+      trending: trendingResults,
+      nowPlaying: mapWithMedia(nowPlayingQ.data, 'movie'),
+      popularMovies: mapWithMedia(popularMoviesQ.data, 'movie'),
+      popularTV: mapWithMedia(popularTVQ.data, 'tv'),
+      topRatedMovies: mapWithMedia(topRatedMoviesQ.data, 'movie'),
+      airingToday: mapWithMedia(airingTodayQ.data, 'tv'),
+      topRatedTV: mapWithMedia(topRatedTVQ.data, 'tv'),
+      upcoming: mapWithMedia(upcomingQ.data, 'movie'),
+    };
+  }, [continueWatching, ...results.map(q => q.data)]);
 
-        {popularMovies?.results && (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-              Popular Movies
-            </h2>
-            <MediaRow title="" movies={popularMovies.results.map((m: any) => ({ ...m, media_type: 'movie' }))} />
-          </div>
-        )}
+  const sanFranciscoFontFamily = {
+    fontFamily: '"SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif'
+  };
 
-        {popularTV?.results && (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase text-white font-sans text-left">
-              Popular Series
-            </h2>
-            <MediaRow title="" movies={popularTV.results.map((m: any) => ({ ...m, media_type: 'tv' }))} />
-          </div>
-        )}
+  return (
+    <div style={sanFranciscoFontFamily} className="min-h-screen bg-[#070708] text-[#E3E3E3] overflow-x-hidden antialiased select-none pb-12">
+      
+      {/* Full Screen Isolated Hero Banner Viewport */}
+      <div className="relative w-screen h-screen z-0">
+        {isInitialLoading ? (
+          <div className="h-screen bg-[#070708] animate-pulse" />
+        ) : processedData.heroMovies.length > 0 ? (
+          <HeroBanner movies={processedData.heroMovies} />
+        ) : null}
       </div>
 
+      {/* Structured Content Layer Stack */}
+      <div className="relative z-10 pt-12 bg-[#070708]">
+        
+        {processedData.continueMovies.length > 0 && (
+          <PremiumFunctionalRow title="Continue watching">
+            <MediaRow title="" movies={processedData.continueMovies} cardSize="md" />
+          </PremiumFunctionalRow>
+        )}
+
+        {isInitialLoading ? (
+          <MinimalSkeleton />
+        ) : processedData.trending.length > 0 ? (
+          <PremiumFunctionalRow title="Trending now">
+            <MediaRow title="" movies={processedData.trending} cardSize="md" />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {nowPlayingQ.isLoading ? <MinimalSkeleton /> : processedData.nowPlaying.length > 0 ? (
+          <PremiumFunctionalRow title="In theaters">
+            <MediaRow title="" movies={processedData.nowPlaying} cardSize="md" />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {popularMoviesQ.isLoading ? <MinimalSkeleton /> : processedData.popularMovies.length > 0 ? (
+          <PremiumFunctionalRow title="Popular movies">
+            <MediaRow title="" movies={processedData.popularMovies} cardSize="md" showRank />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {popularTVQ.isLoading ? <MinimalSkeleton /> : processedData.popularTV.length > 0 ? (
+          <PremiumFunctionalRow title="Popular series">
+            <MediaRow title="" movies={processedData.popularTV} cardSize="md" />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {topRatedMoviesQ.isLoading ? <MinimalSkeleton /> : processedData.topRatedMovies.length > 0 ? (
+          <PremiumFunctionalRow title="Top rated movies">
+            <MediaRow title="" movies={processedData.topRatedMovies} cardSize="md" />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {airingTodayQ.isLoading ? <MinimalSkeleton /> : processedData.airingToday.length > 0 ? (
+          <PremiumFunctionalRow title="Airing today">
+            <MediaRow title="" movies={processedData.airingToday} cardSize="md" />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {topRatedTVQ.isLoading ? <MinimalSkeleton /> : processedData.topRatedTV.length > 0 ? (
+          <PremiumFunctionalRow title="Top rated series">
+            <MediaRow title="" movies={processedData.topRatedTV} cardSize="md" showRank />
+          </PremiumFunctionalRow>
+        ) : null}
+
+        {upcomingQ.isLoading ? <MinimalSkeleton /> : processedData.upcoming.length > 0 ? (
+          <PremiumFunctionalRow title="Coming soon">
+            <MediaRow title="" movies={processedData.upcoming} cardSize="md" />
+          </PremiumFunctionalRow>
+        ) : null}
+      </div>
     </div>
   );
 };

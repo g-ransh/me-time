@@ -1,210 +1,288 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Info, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Info, Plus, Star, Calendar, Clock, Tv } from 'lucide-react';
 import { Movie } from '../types';
-import { getBackdropUrl, getTitle, getReleaseYear } from '../lib/tmdb';
+import { getBackdropUrl, getTitle, getReleaseYear, getMovieDetails, getTVDetails, getLogoUrl } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
 
 interface HeroBannerProps {
-  movies: Movie[];
+  movies?: Movie[];
 }
 
-const GENRE_MAP: Record<number, string> = {
-  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
-  80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
-  14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
-  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
-  53: 'Thriller', 10752: 'War', 37: 'Western',
-};
-
-const HeroBanner: React.FC<HeroBannerProps> = ({ movies }) => {
+const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const { setSelectedMedia, setIsModalOpen, addToWatchlist, isInWatchlist, setPlayerMedia, setIsPlayerOpen } = useStore();
+  const [currentDetails, setCurrentDetails] = useState<any>(null);
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [isFetchingDetails, setIsFetchingDetails] = useState<boolean>(true);
+  
+  const [timerKey, setIframeKey] = useState(0);
 
-  const featured = movies.slice(0, 5);
+  const {
+    setSelectedMedia,
+    setIsModalOpen,
+    addToWatchlist,
+    removeFromWatchlist,
+    isInWatchlist,
+    setPlayerMedia,
+    setIsPlayerOpen,
+  } = useStore();
+
+  const featured = movies.slice(0, 7).filter(m => m.backdrop_path);
   const current = featured[currentIndex];
 
   useEffect(() => {
-    if (!isAutoPlaying || featured.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % featured.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, featured.length]);
+    if (!current) return;
+    setCurrentDetails(null);
+    setLogoPath(null);
+    setIsFetchingDetails(true);
 
-  const goTo = (index: number) => {
-    setCurrentIndex(index);
+    const fetch = async () => {
+      try {
+        const data = current.media_type === 'tv'
+          ? await getTVDetails(current.id)
+          : await getMovieDetails(current.id);
+        setCurrentDetails(data);
+
+        const unsealedData = data as any;
+        if (unsealedData?.images?.logos && unsealedData.images.logos.length > 0) {
+          const engLogo = unsealedData.images.logos.find((l: any) => l.iso_639_1 === 'en') || unsealedData.images.logos[0];
+          setLogoPath(engLogo.file_path);
+        }
+      } catch {
+        // ignore safely
+      } finally {
+        setIsFetchingDetails(false);
+      }
+    };
+    fetch();
+  }, [current?.id]);
+
+  useEffect(() => {
+    if (!isAutoPlaying || featured.length === 0) return;
+    const t = setInterval(() => {
+      setCurrentIndex(p => (p + 1) % featured.length);
+      setIframeKey(k => k + 1);
+    }, 8000);
+    return () => clearInterval(t);
+  }, [isAutoPlaying, featured.length, timerKey]);
+
+  const goTo = (i: number) => {
+    setCurrentIndex(i);
+    setIframeKey(k => k + 1);
     setIsAutoPlaying(false);
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
-  const prev = () => goTo((currentIndex - 1 + featured.length) % featured.length);
-  const next = () => goTo((currentIndex + 1) % featured.length);
-
   if (!current) return null;
 
-  const genres = current.genre_ids?.slice(0, 3).map((id) => GENRE_MAP[id]).filter(Boolean) || [];
   const inWatchlist = isInWatchlist(current.id);
+  const isTV = current.media_type === 'tv';
 
-  // Premium Liquid Glass Blur Config Stylesheet
-  const liquidGlassStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    backdropFilter: 'blur(32px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-    border: '1px solid rgba(255, 255, 255, 0.07)',
+  const getRuntimeLabel = () => {
+    if (isTV) {
+      const seasons = currentDetails?.number_of_seasons;
+      return seasons ? `${seasons} Season${seasons > 1 ? 's' : ''}` : 'Series';
+    }
+    const mins = currentDetails?.runtime;
+    if (!mins) return null;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h ${m > 0 ? `${m}m` : ''}`.trim() : `${m}m`;
+  };
+
+  const runtimeLabel = getRuntimeLabel();
+
+  const uniformMetadataPillClass =
+    'h-9 px-4 rounded-full flex items-center justify-center gap-1.5 text-[13px] font-bold select-none ' +
+    'border border-white/[0.08] tracking-wide shrink-0 ' +
+    'shadow-[0_2px_12px_rgba(0,0,0,0.3)]';
+
+  const upscaledActionPillClass =
+    'h-[46px] px-6 rounded-full flex items-center justify-center gap-2 text-[15px] font-bold select-none ' +
+    'border tracking-wide shrink-0 transition-colors shadow-[0_4px_16px_rgba(0,0,0,0.4)]';
+
+  const liquidGlassStyle: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.07)', 
+    fontFamily: '"Inter", sans-serif',
   };
 
   return (
-    <div className="relative h-screen min-h-[700px] max-h-[950px] w-full overflow-hidden bg-[#020204]" style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}>
-      
-      {/* Background Cinematic Canvas Layers */}
+    <div
+      className="relative h-screen min-h-[720px] max-h-[950px] w-full overflow-hidden bg-[#020204]"
+      style={{ fontFamily: '"Inter", sans-serif' }}
+    >
+      {/* ── Cinematic Backdrop ── */}
       <AnimatePresence mode="sync">
         <motion.div
           key={currentIndex}
           className="absolute inset-0 z-0"
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.85, ease: [0.25, 1, 0.5, 1] }}
+          transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1] }}
         >
           <img
             src={getBackdropUrl(current.backdrop_path)}
             alt=""
-            className="w-full h-full object-cover opacity-50"
+            className="w-full h-full object-cover brightness-[1.04] contrast-[1.03]"
           />
-          {/* Proportional Lighting Vignette Gradients */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#020204] via-[#020204]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#020204] via-transparent to-[#020204]/30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#020204]" />
+
+          {/* Expanded Brownian Diffusion: Shifted gradient thresholds back to let ambient lighting overflow the interface cleanly */}
+          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#020204] via-[#020204]/30 to-transparent mix-blend-normal" />
+          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-white/[0.08] via-transparent to-[#020204]/10" />
+          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#020204]/30 via-transparent to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      {/* Main Foreground Content Stage */}
-      <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-16 lg:px-24 pt-16 max-w-[1400px] mx-auto text-left">
+      {/* ── Content Stage ── */}
+      <div className="relative z-20 h-full flex flex-col justify-center px-8 md:px-16 lg:px-24 pt-10 max-w-[1400px] mx-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 15 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-            className="max-w-3xl"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -14 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-[680px]"
           >
-            {/* Perfectly Unified Golden Ratio Badges Row */}
-            <div className="flex items-center gap-3 mb-6">
-              {/* Rating Pill */}
-              <div 
-                style={liquidGlassStyle} 
-                className="w-24 h-9 rounded-full flex items-center justify-center gap-1.5 shadow-xl text-xs font-bold text-white shrink-0"
-              >
-                <Star size={13} className="text-amber-400 fill-amber-400" />
-                <span>{current.vote_average?.toFixed(1) || 'N/A'}</span>
-              </div>
-
-              {/* Release Year Pill */}
-              <div 
-                style={liquidGlassStyle} 
-                className="w-24 h-9 rounded-full flex items-center justify-center shadow-xl text-xs font-bold text-white/80 shrink-0"
-              >
-                <span>{getReleaseYear(current)}</span>
-              </div>
-
-              {/* Primary Genre Pill */}
-              {genres[0] && (
-                <div 
-                  style={liquidGlassStyle} 
-                  className="w-24 h-9 rounded-full flex items-center justify-center shadow-xl text-xs font-bold text-white/80 shrink-0 truncate px-2"
+            {/* Unified Title Frame Container */}
+            <div className="mb-6 select-none flex items-center min-h-[110px]">
+              {isFetchingDetails ? (
+                <div className="h-[110px] w-48 bg-transparent" />
+              ) : logoPath ? (
+                <img
+                  src={getLogoUrl(logoPath)}
+                  alt={getTitle(current)}
+                  className="max-h-[110px] w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+                />
+              ) : (
+                <h1
+                  className="text-5xl md:text-[64px] lg:text-[72px] font-black leading-[0.9] text-white uppercase tracking-tighter drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
+                  style={{ fontWeight: 950, letterSpacing: '-0.03em' }}
                 >
-                  <span>{genres[0]}</span>
+                  {getTitle(current)}
+                </h1>
+              )}
+            </div>
+
+            {/* Standardized Geometric Metadata Row Layer */}
+            <div className="flex items-center gap-2.5 mb-6 flex-wrap">
+              <div className={uniformMetadataPillClass} style={liquidGlassStyle}>
+                <Star size={13} className="text-amber-400 fill-amber-400 flex-shrink-0" />
+                <span className="text-white">{current.vote_average ? current.vote_average.toFixed(1) : '7.9'}</span>
+              </div>
+
+              <div className={uniformMetadataPillClass} style={liquidGlassStyle}>
+                <Calendar size={13} className="text-white/55 flex-shrink-0" />
+                <span className="text-white">{getReleaseYear(current)}</span>
+              </div>
+
+              {runtimeLabel && (
+                <div className={uniformMetadataPillClass} style={liquidGlassStyle}>
+                  {isTV
+                    ? <Tv size={13} className="text-white/55 flex-shrink-0" />
+                    : <Clock size={13} className="text-white/55 flex-shrink-0" />
+                  }
+                  <span className="text-white">{runtimeLabel}</span>
                 </div>
               )}
             </div>
 
-            {/* Expanded Authoritative Upper Title Focal Point */}
-            <h1 
-              className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase leading-[0.9] mb-5 font-sans drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-            >
-              {getTitle(current)}
-            </h1>
+            {/* DESCRIPTION LAYER: Strictly locks truncation parameters and conditional space evaluation anchors inside line 3 thresholds */}
+            <div className="mb-8 max-w-[560px]">
+              <p 
+                className="text-white/95 text-base md:text-[17px] leading-relaxed select-text font-serif antialiased tracking-wide line-clamp-3 overflow-hidden text-ellipsis display-box webkit-box webkit-line-clamp-3 webkit-box-orient-vertical" 
+                style={{ 
+                  fontFamily: '"New York Medium", Georgia, Cambria, serif', 
+                  fontWeight: 400,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical'
+                }}
+              >
+                {current.overview || 'No description available for this specific entertainment frame sequence.'}
+                {/* STRICT CONDITIONAL INTERCEPT:
+                  Increased threshold length boundary rules from 140 to 180 characters.
+                  Guarantees that strings cleanly wrapping under 3 full block lines will never mount trailing ellipsis indicators.
+                */}
+                {current.overview && current.overview.length > 180 && (
+                  <span className="text-white font-serif tracking-wide select-none">&nbsp;...</span>
+                )}
+              </p>
+            </div>
 
-            {/* Content Overview Segment Description */}
-            <p className="text-white/50 text-sm md:text-base font-normal leading-relaxed mb-8 max-w-xl font-sans tracking-wide drop-shadow-sm line-clamp-3">
-              {current.overview || 'No presentation logging cataloged for this specific archival showcase frame.'}
-            </p>
-
-            {/* Magnified Actions Row Block Interface */}
-            <div className="flex items-center gap-3.5 flex-wrap">
+            {/* Action Buttons Group Stage */}
+            <div className="flex items-center gap-3">
               <motion.button
                 onClick={() => {
-                  setPlayerMedia({
-                    id: current.id,
-                    type: current.media_type === 'tv' ? 'tv' : 'movie',
-                  });
+                  setPlayerMedia({ id: current.id, type: isTV ? 'tv' : 'movie', season: 1, episode: 1 });
                   setIsPlayerOpen(true);
                 }}
-                className="px-8 py-4 rounded-full font-bold text-sm flex items-center gap-2 bg-white text-black transition-all cursor-pointer shadow-2xl"
                 whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileTap={{ scale: 0.97 }}
+                className={`${upscaledActionPillClass} bg-white/[0.07] border-white/[0.08] text-white hover:bg-white/[0.12] cursor-pointer`}
+                style={liquidGlassStyle}
               >
-                <Play size={14} className="fill-current" />
-                Play
+                <Play size={15} className="text-white fill-current flex-shrink-0" />
+                <span>Play</span>
               </motion.button>
 
               <motion.button
-                onClick={() => {
-                  setSelectedMedia(current);
-                  setIsModalOpen(true);
+                onClick={() => { setSelectedMedia(current); setIsModalOpen(true); }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className={`${upscaledActionPillClass} border-white/[0.08] text-white hover:bg-white/[0.12] cursor-pointer`}
+                style={liquidGlassStyle}
+              >
+                <Info size={15} className="text-white/80 flex-shrink-0" />
+                <span>Info</span>
+              </motion.button>
+
+              <motion.button
+                onClick={() => inWatchlist ? removeFromWatchlist(current.id) : addToWatchlist(current)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className="w-[46px] h-[46px] rounded-full flex items-center justify-center border shrink-0 transition-colors shadow-[0_4px_16px_rgba(0,0,0,0.4)] cursor-pointer"
+                style={{
+                  ...liquidGlassStyle,
+                  background: inWatchlist ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.07)',
+                  borderColor: inWatchlist ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.08)',
                 }}
-                style={liquidGlassStyle}
-                className="px-7 py-4 rounded-full font-bold text-sm flex items-center gap-2 text-white hover:bg-white/5 transition-all cursor-pointer shadow-2xl"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
               >
-                <Info size={14} />
-                Info
-              </motion.button>
-
-              <motion.button
-                onClick={() => inWatchlist ? useStore.getState().removeFromWatchlist(current.id) : addToWatchlist(current)}
-                style={liquidGlassStyle}
-                className={`w-14 h-14 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/5 transition-all shadow-2xl ${inWatchlist ? 'text-red-400' : 'text-white'}`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Plus size={20} className={inWatchlist ? 'rotate-45' : ''} style={{ transition: 'transform 0.3s ease-out' }} />
+                <Plus
+                  size={18}
+                  className={`transition-all duration-300 ${inWatchlist ? 'rotate-45 text-red-400' : 'text-white'}`}
+                />
               </motion.button>
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Proportional Navigation Carousel Dots */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5">
-        {featured.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className={`rounded-full transition-all duration-300 cursor-pointer ${
-              i === currentIndex ? 'w-8 h-2 bg-white' : 'w-2 h-2 bg-white/20 hover:bg-white/40'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Compact Interactive Right Side Miniature Thumb Rail */}
-      <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden xl:flex flex-col gap-3">
-        {featured.map((movie, i) => (
-          <button
-            key={movie.id}
-            onClick={() => goTo(i)}
-            className={`relative w-24 h-14 rounded-xl overflow-hidden transition-all duration-500 cursor-pointer ${
-              i === currentIndex ? 'ring-2 ring-white opacity-100 scale-105' : 'opacity-30 hover:opacity-60'
-            }`}
-          >
-            <img src={getBackdropUrl(movie.backdrop_path)} alt="" className="w-full h-full object-cover" />
-          </button>
-        ))}
+      {/* ── Progress Filling Capsule Bar Node ── */}
+      <div className="absolute bottom-11 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-[8px] min-w-[200px]">
+        {featured.map((_, i) => {
+          const isActive = i === currentIndex;
+          return (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className="relative h-[7px] rounded-full overflow-hidden bg-white/20 transition-all duration-300 shadow-[0_1px_4px_rgba(0,0,0,0.5)]"
+              style={{ width: isActive ? '24px' : '7px' }}
+            >
+              {isActive && (
+                <motion.div
+                  key={timerKey}
+                  className="absolute inset-y-0 left-0 bg-white rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 8, ease: 'linear' }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ const PROVIDERS: Provider[] = [
 ];
 
 const VideoPlayer: React.FC = () => {
-  const { isPlayerOpen, setIsPlayerOpen, playerMedia, setPlayerMedia } = useStore();
+  const { isPlayerOpen, setIsPlayerOpen, playerMedia, setPlayerMedia, addToContinueWatching } = useStore();
 
   const [providerIndex, setProviderIndex] = useState(0);
   const [showSourceMenu, setShowSourceMenu] = useState(false);
