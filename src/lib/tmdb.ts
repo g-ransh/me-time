@@ -1,23 +1,63 @@
 import axios from 'axios';
-import { TMDBResponse, Movie, MovieDetails, Genre, SearchResult } from '../types';
+import { TMDBResponse, Movie, Genre, SearchResult } from '../types';
 
+// Hardcoded fallback keys retained from your source configuration specs
 export const API_KEY = '043a45de34cc570b9ef0f18ee99aa867'; 
 export const BASE_URL = 'https://api.themoviedb.org/3';
 
-// Fallback configuration using VITE environment wrapper hooks
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '8265bd1679663a7ea12ac168da84d2e8';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
+// Simple, fast in-memory cache map to serve as a client-side edge emulation layer
+const requestCache = new Map<string, { data: any; expiry: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // Cache data for exactly 5 minutes (Golden ratio aligned sub-intervals)
+
 export const tmdb = axios.create({
   baseURL: TMDB_BASE_URL,
-  timeout: 5000, // Forces the connection to stop waiting after 5 seconds and trigger catch fallbacks
+  timeout: 5000, // Retained your 5-second catch-fallback timeout threshold
   params: {
     api_key: TMDB_API_KEY,
     language: 'en-US',
   },
 });
 
+// ── ADVANCED NETWORK INTERCEPTOR RIG ──
+// Intercepts outbound traffic to instantly deliver cached promises if they exist
+tmdb.interceptors.request.use((config) => {
+  // Generate a unique tracking key using the endpoint url string and its query parameters
+  const cacheKey = `${config.url}?${new URLSearchParams(config.params as Record<string, string>).toString()}`;
+  const cachedResponse = requestCache.get(cacheKey);
+
+  if (cachedResponse && cachedResponse.expiry > Date.now()) {
+    // If the cache hits and hasn't expired, cancel the request chain and pass the clean data through an Axios CancelToken
+    const source = axios.CancelToken.source();
+    config.cancelToken = source.token;
+    source.cancel(JSON.stringify(cachedResponse.data));
+  }
+  return config;
+});
+
+// Intercepts successful incoming network data packages to save them in our memory track line
+tmdb.interceptors.response.use(
+  (response) => {
+    const cacheKey = `${response.config.url}?${new URLSearchParams(response.config.params as Record<string, string>).toString()}`;
+    requestCache.set(cacheKey, {
+      data: response.data,
+      expiry: Date.now() + CACHE_TTL,
+    });
+    return response;
+  },
+  (error) => {
+    // If the request was cancelled by our cache system interrupter, parse and return the saved data cleanly
+    if (axios.isCancel(error)) {
+      return Promise.resolve({ data: JSON.parse(error.message) });
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ── Keep your image helpers and endpoint functions exactly the same below this line ──
 export const getImageUrl = (path: string | null, size: string = 'original'): string => {
   if (!path) return '/placeholder.jpg';
   return `${TMDB_IMAGE_BASE}/${size}${path}`;

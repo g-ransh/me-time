@@ -15,15 +15,15 @@ const PROVIDERS: Provider[] = [
   { 
     id: 'cinesrc', 
     name: 'Server 1', 
-    label: 'Fast', 
+    label: 'HD', 
     buildUrl: (id, type, s, e) => type === 'tv' 
-      ? `https://cinesrc.st/embed/tv/${id}/${s}/${e}` 
-      : `https://cinesrc.st/embed/movie/${id}` 
+      ? `https://cinesrc.st/embed/tv/${id}/${s}/${e}?initial_quality=720p` 
+      : `https://cinesrc.st/embed/movie/${id}?initial_quality=720p` 
   },
   { 
     id: '2embed', 
     name: 'Server 2', 
-    label: 'HD', 
+    label: 'Fast', 
     buildUrl: (id, type, s, e) => type === 'tv' 
       ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` 
       : `https://www.2embed.cc/embed/${id}` 
@@ -31,18 +31,10 @@ const PROVIDERS: Provider[] = [
   { 
     id: 'vidking', 
     name: 'Server 3', 
-    label: 'Alt', 
-    buildUrl: (id, type, s, e) => type === 'tv' 
-      ? `https://vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true` 
-      : `https://vidking.net/embed/movie/${id}?autoPlay=true` 
-  },
-  { 
-    id: 'vidsrc-xyz', 
-    name: 'Server 4', 
     label: 'Backup', 
     buildUrl: (id, type, s, e) => type === 'tv' 
-      ? `https://vidsrc.xyz/embed/tv?tmdb=${id}&season=${s}&episode=${e}&autoplay=1` 
-      : `https://vidsrc.xyz/embed/movie?tmdb=${id}&autoplay=1` 
+      ? `https://vidking.net/embed/tv/${id}/${s}/${e}`
+      : `https://vidking.net/embed/movie/${id}`
   },
 ];
 
@@ -77,23 +69,49 @@ const VideoPlayer: React.FC = () => {
     return currentProvider.buildUrl(playerMedia.id, playerMedia.type, season, episode);
   }, [playerMedia, currentProvider, season, episode]);
 
-  // ── FIX: Comprehensive Cache & Panel Reset on Show Switch ──
+  // ── LOCAL STORAGE PERSISTENCE ENGINE ──
+  // Saves data immediately on load to make sure you never lose your spot, even if the state drops out
+  useEffect(() => {
+    if (!isPlayerOpen || !playerMedia) return;
+
+    // Type-safe bypass variables to safely extract full asset image metadata arrays
+    const mediaAsset = playerMedia as any;
+
+    const historyItem = {
+      id: playerMedia.id,
+      type: playerMedia.type,
+      season: playerMedia.type === 'tv' ? season : undefined,
+      episode: playerMedia.type === 'tv' ? episode : undefined,
+      title: mediaAsset.title || mediaAsset.name || 'Unknown Title',
+      poster_path: mediaAsset.poster_path || null,
+      backdrop_path: mediaAsset.backdrop_path || null,
+      watchedAt: Date.now()
+    };
+
+    // Pull history tracking arrays safely out of local browser cache records
+    const currentHistory = JSON.parse(localStorage.getItem('orb_continue_watching') || '[]');
+    const filteredHistory = currentHistory.filter((item: any) => item.id !== playerMedia.id);
+    
+    // Add the new item right to the front of the queue
+    localStorage.setItem('orb_continue_watching', JSON.stringify([historyItem, ...filteredHistory]));
+  }, [playerMedia?.id, season, episode, isPlayerOpen]);
+
   useEffect(() => {
     setProviderIndex(0);
     setIframeKey(k => k + 1);
     setLoadStatus('loading');
     setIsPlaying(true);
     
-    // Hard purge selector records so old series data doesn't bleed into new series trees
     episodeCache.current = {};
     setEpisodes([]);
     setTotalSeasons(1);
     setPanelSeason(playerMedia?.season ?? 1);
     setPanelError(false);
     setPanelLoading(false);
-  }, [playerMedia?.id]); // Fires immediately when a brand new media item mounts
+  }, [playerMedia?.id]);
 
-  // ── Intelligent 10s Auto-Fallback System ──
+  // ── IMPROVED AUTOMATED SERVER ROTATION SYSTEM ──
+  // Tracks your connection status safely. Automatically shifts servers if it jams on an infinite loading state.
   useEffect(() => {
     if (loadStatus !== 'loading') {
       if (autoFallbackRef.current) clearTimeout(autoFallbackRef.current);
@@ -101,9 +119,10 @@ const VideoPlayer: React.FC = () => {
     }
 
     autoFallbackRef.current = setTimeout(() => {
+      console.warn(`Server ${providerIndex + 1} timed out or failed to resolve. Shifting to backup nodes.`);
       setProviderIndex(p => (p + 1) % PROVIDERS.length);
       setIframeKey(k => k + 1);
-    }, 10000);
+    }, 9000); // Trigger a backup server shift if a connection takes longer than 9 seconds
 
     return () => { if (autoFallbackRef.current) clearTimeout(autoFallbackRef.current); };
   }, [loadStatus, providerIndex]);
@@ -114,9 +133,7 @@ const VideoPlayer: React.FC = () => {
   }, [isPlayerOpen]);
 
   useEffect(() => {
-    const handleMessage = () => {
-      setIsPlaying(p => !p);
-    };
+    const handleMessage = () => { setIsPlaying(p => !p); };
     window.addEventListener('blur', handleMessage);
     return () => window.removeEventListener('blur', handleMessage);
   }, []);
@@ -139,7 +156,7 @@ const VideoPlayer: React.FC = () => {
         else if (showSourceMenu) setShowSourceMenu(false);
         else setIsPlayerOpen(false);
       }
-      if (e.key === ' ') {
+        if (e.key === ' ') {
         e.preventDefault();
         setIsPlaying(p => !p);
       }
@@ -148,7 +165,6 @@ const VideoPlayer: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [isPlayerOpen, isPanelOpen, showSourceMenu]);
 
-  // ── TMDB Episode Fetching Engine ──
   useEffect(() => {
     if (!isPlayerOpen || type !== 'tv' || !playerMedia?.id) return;
 
@@ -190,7 +206,7 @@ const VideoPlayer: React.FC = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* ══════════════ 4. TOP BAR & EXIT OPTIONS ══════════════ */}
+          {/* ── TOP BAR CONTROL ROW ── */}
           <div
             className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between gap-4 px-6 pt-6 pb-16 pointer-events-none"
             style={{ background: 'linear-gradient(to bottom, rgba(4,4,6,0.95) 0%, rgba(4,4,6,0.4) 60%, transparent 100%)' }}
@@ -214,7 +230,6 @@ const VideoPlayer: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2.5 z-50 pointer-events-auto" ref={sourceMenuRef}>
-              {/* ── 2. TV PILL TRIGGER ── */}
               {type === 'tv' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setPanelSeason(season); setIsPanelOpen(true); }}
@@ -226,7 +241,6 @@ const VideoPlayer: React.FC = () => {
                 </button>
               )}
 
-              {/* ── 1. SERVER SELECTION ── */}
               <div className="relative">
                 <button
                   onClick={() => setShowSourceMenu(s => !s)}
@@ -262,9 +276,8 @@ const VideoPlayer: React.FC = () => {
             </div>
           </div>
 
-          {/* ══════════════ CONTENT SURFACE IFRAME ENGINE ══════════════ */}
+          {/* ── HIGH PERFORMANCE IFRAME EMBED PORT ── */}
           <div className="flex-1 w-full h-full relative bg-black z-10">
-            {/* ── 4. LOADING TRACKS SCREEN ── */}
             <AnimatePresence>
               {loadStatus === 'loading' && (
                 <motion.div
@@ -294,13 +307,32 @@ const VideoPlayer: React.FC = () => {
               src={currentUrl}
               className="w-full h-full border-0 absolute inset-0"
               allowFullScreen
-              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture; xr-spatial-tracking"
+              sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+              loading="eager"
               title="Video Feed Content"
-              onLoad={() => setLoadStatus('loaded')}
+              {...{ fetchpriority: "high" }} 
+              onLoad={() => {
+                setLoadStatus('loaded');
+                
+                if (playerMedia) {
+                  try {
+                    addToContinueWatching({
+                      id: playerMedia.id,
+                      type: playerMedia.type,
+                      season: type === 'tv' ? season : undefined,
+                      episode: type === 'tv' ? episode : undefined,
+                      movie: playerMedia as any 
+                    });
+                  } catch (e) {
+                    console.warn("Store sync paused. Local cache storage handled safely instead.", e);
+                  }
+                }
+              }}
             />
           </div>
 
-          {/* ── 2. MATCHING MEDIA-CARD LEVEL SELECTION SLIDING SHEET ── */}
+          {/* ── EPISODE SELECTOR SLIDING DRAWER PANEL ── */}
           <AnimatePresence>
             {isPanelOpen && type === 'tv' && (
               <>

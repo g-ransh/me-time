@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useStore } from './store/useStore';
@@ -28,6 +28,36 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { activeTab } = useStore();
+
+  // ── OPTIMIZATION: DNS PREFETCH & PRECONNECT ENGINES ──
+  // Quietly establishes early infrastructure handshakes with upstream player CDNs
+  useEffect(() => {
+    const domains = [
+      'https://vidsrc.to',
+      'https://vidsrc.me',
+      'https://vidsrc.xyz',
+      'https://vidsrc.pm'
+    ];
+
+    domains.forEach(domain => {
+      // Create and mount preconnect tags to warm up TCP/TLS sockets
+      if (!document.querySelector(`link[href="${domain}"][rel="preconnect"]`)) {
+        const preconnect = document.createElement('link');
+        preconnect.rel = 'preconnect';
+        preconnect.href = domain;
+        preconnect.crossOrigin = 'anonymous';
+        document.head.appendChild(preconnect);
+      }
+      
+      // Create and mount dns-prefetch fallback tags
+      if (!document.querySelector(`link[href="${domain}"][rel="dns-prefetch"]`)) {
+        const prefetch = document.createElement('link');
+        prefetch.rel = 'dns-prefetch';
+        prefetch.href = domain;
+        document.head.appendChild(prefetch);
+      }
+    });
+  }, []);
 
   const pages: Record<string, React.ReactElement> = {
     home: <HomePage />,

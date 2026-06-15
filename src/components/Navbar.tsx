@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Film, Home, Compass, Settings, Bookmark, Tv } from 'lucide-react';
+import { Search, X, Film, Home, Compass, Settings, User, Tv } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { searchMulti } from '../lib/tmdb';
 import { SearchResult } from '../types';
@@ -54,18 +54,20 @@ const Navbar: React.FC = () => {
     useStore.setState({ selectedMedia: item, isModalOpen: true });
   };
 
-  const navItems: { id: 'home' | 'movies' | 'series' | 'genres'; label: string }[] = [
-    { id: 'home',   label: 'Home' },
-    { id: 'movies', label: 'Movies' },
-    { id: 'series', label: 'Series' },
-    { id: 'genres', label: 'Discover' },
+  // Moved 'watchlist' directly into the primary navigation array for perfect text spacing
+  const navItems: { id: 'home' | 'movies' | 'series' | 'genres' | 'watchlist'; label: string }[] = [
+    { id: 'home',      label: 'Home' },
+    { id: 'movies',    label: 'Movies' },
+    { id: 'series',    label: 'Series' },
+    { id: 'genres',    label: 'Discover' },
+    { id: 'watchlist', label: 'My List' },
   ];
 
-  // Restructured Fluid Water Baseline with an increased +25% blurring pass (20px)
+  // 10% translucent with Liquid Glass Gaussian texture
   const thinWaterStyle: React.CSSProperties = {
-    backgroundColor: scrolled ? 'rgba(12, 12, 14, 0.55)' : 'rgba(16, 16, 20, 0.3)',
-    backdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
+    backgroundColor: scrolled ? 'rgba(12, 12, 14, 0.1)' : 'rgba(16, 16, 20, 0.1)',
+    backdropFilter: 'blur(24px) saturate(210%) brightness(115%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(210%) brightness(115%)',
     fontFamily: '"Inter", sans-serif',
   };
 
@@ -80,12 +82,12 @@ const Navbar: React.FC = () => {
         style={{ fontFamily: '"Inter", sans-serif' }}
       >
         <div
-          className="flex items-center gap-[24px] px-[22px] py-2 rounded-full select-none border border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+          className="flex items-center gap-[32px] p-[8px] rounded-full select-none border border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
           style={thinWaterStyle}
         >
           {/* Movie Reel Logo Emblem Layout Anchor */}
           <motion.button
-            className="flex items-center justify-center w-[30px] h-[30px] rounded-full shrink-0 text-white/80 hover:text-white"
+            className="flex items-center justify-center w-[34px] h-[34px] rounded-full shrink-0 text-white/80 hover:text-white"
             onClick={() => setActiveTab('home')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -100,8 +102,8 @@ const Navbar: React.FC = () => {
             </svg>
           </motion.button>
 
-          {/* Main Navigation Row — Golden Ratio Proportion Scaling Matrix */}
-          <nav className="hidden md:flex items-center gap-[24px]">
+          {/* Main Navigation Row — Space equally matched to all elements */}
+          <nav className="hidden md:flex items-center gap-[32px]">
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
@@ -122,26 +124,26 @@ const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right Interface Utilities Section Block */}
-          <div className="flex items-center gap-3.5 text-white/35">
+          {/* Right Compact Interface Utilities Section Block — Tighter icon grouping */}
+          <div className="flex items-center gap-[12px] text-white/35">
             
-            {/* Search Input Box Area (Direct Search Navigation State Attachment Fixed) */}
+            {/* Search Input Box Area */}
             <div className="relative flex items-center">
               <AnimatePresence mode="wait">
                 {isSearchOpen ? (
                   <motion.div
                     key="input"
-                    initial={{ width: 30, opacity: 0 }}
+                    initial={{ width: 34, opacity: 0 }}
                     animate={{ width: 170, opacity: 1 }}
-                    exit={{ width: 30, opacity: 0 }}
+                    exit={{ width: 34, opacity: 0 }}
                     transition={{ duration: 0.22, ease: 'easeInOut' }}
                     className="relative"
                   >
                     <div
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/[0.06]"
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                      className="flex items-center gap-1.5 px-3 rounded-full border border-white/[0.06]"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', height: '34px' }}
                     >
-                      <Search size={13} className="text-white/40 shrink-0" />
+                      <Search size={15} className="text-white/40 shrink-0" />
                       <input
                         ref={searchRef}
                         value={searchQuery}
@@ -158,7 +160,7 @@ const Navbar: React.FC = () => {
                         }}
                       />
                       <button onClick={closeSearch} className="shrink-0 cursor-pointer">
-                        <X size={11} className="text-white/30 hover:text-white/70 transition-colors" />
+                        <X size={13} className="text-white/30 hover:text-white/70 transition-colors" />
                       </button>
                     </div>
 
@@ -218,24 +220,22 @@ const Navbar: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            {/* Watchlist Bookmark Capsule Shortcut — Exchanged to be first in order */}
-            <motion.button
-              onClick={() => setActiveTab('watchlist')}
-              className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-white/5 cursor-pointer ${
-                activeTab === 'watchlist' ? 'text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.4)]' : 'text-white/40 hover:text-white'
-              }`}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.95 }}
-              title="Watchlist Directory"
-            >
-              <Bookmark size={15} className={activeTab === 'watchlist' ? 'fill-current text-white' : ''} />
-            </motion.button>
-
-            {/* Config Node — Exchanged to be second in order */}
+            {/* Profile Action Node */}
             <motion.button
               className="w-[34px] h-[34px] rounded-full flex items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5 cursor-pointer text-white/40"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.95 }}
+              title="Profile"
+            >
+              <User size={15} />
+            </motion.button>
+
+            {/* Settings Config Node */}
+            <motion.button
+              className="w-[34px] h-[34px] rounded-full flex items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5 cursor-pointer text-white/40"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+              title="Settings"
             >
               <Settings size={15} />
             </motion.button>
@@ -255,6 +255,7 @@ const Navbar: React.FC = () => {
             { id: 'movies' as const, label: 'Movies',   icon: Film },
             { id: 'series' as const, label: 'Series',   icon: Tv },
             { id: 'genres' as const, label: 'Discover', icon: Compass },
+            { id: 'watchlist' as const, label: 'My List', icon: User }, // Mobile fallback for the list tab
           ].map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
             return (

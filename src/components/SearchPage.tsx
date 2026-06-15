@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, History, Trash2 } from 'lucide-react';
+import { Search, X, History } from 'lucide-react';
 import { Movie } from '../types';
 import { searchMulti } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
@@ -39,7 +39,7 @@ const SearchPage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    if (loading === false) setLoading(true);
     debounceRef.current = setTimeout(async () => {
       const trimmedQuery = searchQuery.trim();
       try {
@@ -72,6 +72,15 @@ const SearchPage: React.FC = () => {
     });
   };
 
+  // Cancels and drops a specific single entry out of the local history array
+  const removeHistoryItem = (id: number) => {
+    setRecentMedia((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const clearAllHistory = () => {
     setRecentMedia([]);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -84,25 +93,37 @@ const SearchPage: React.FC = () => {
     border: '1px solid rgba(255, 255, 255, 0.06)',
   };
 
+  // Helvetica Neue Medium precise font token assignment configurations
+  const helveticaNeueMediumStyle = {
+    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+    fontWeight: 500,
+  };
+
+  const garamondSerifStyle = {
+    fontFamily: '"Garamond", "Apple Garamond", "Baskerville", "Times New Roman", serif'
+  };
+
   return (
-    /* FIXED: Enforced universal Inter typography system across all parent and nested child segments */
     <div className="relative min-h-screen w-full bg-[#020204] text-white overflow-x-hidden flex flex-col justify-start" style={{ fontFamily: '"Inter", sans-serif' }}>
       
       {/* Immersive Backdrop Cinematic Aura Layer */}
       <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
         <div 
-          className="absolute top-[-25%] left-1/2 -translate-x-1/2 w-[1400px] h-[750px] opacity-40 blur-[160px] rounded-full"
+          className="absolute top-[-25%] left-1/2 -translate-x-1/2 w-[1400px] h-[750px] opacity-40 blur-[10px] rounded-full"
           style={{
             background: 'radial-gradient(circle, rgba(255,110,0,0.35) 0%, rgba(255,40,100,0.12) 45%, rgba(12,8,24,0) 80%)'
           }}
         />
       </div>
 
-      {/* Main Structural Centered Viewport Wrapper */}
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-8 md:px-12 flex flex-col items-center pt-40">
+      {/* Main Structural Wrapper */}
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-8 md:px-12 flex flex-col items-center pt-48">
         
-        {/* Exact Image Styled Title Header */}
-        <h1 className="text-4xl md:text-[40px] font-black tracking-tight text-white text-center mb-5 select-none">
+        {/* Swapped to Helvetica Neue Medium, added clean spacing downward and pulled 2.5% vertically via transform inline configurations */}
+        <h1 
+          style={{ ...helveticaNeueMediumStyle, transform: 'translateY(2.5%)' }}
+          className="text-4xl md:text-[44px] text-white text-center mt-6 mb-8 select-none tracking-normal opacity-95"
+        >
           What's your next obsession?
         </h1>
 
@@ -144,27 +165,53 @@ const SearchPage: React.FC = () => {
                 exit={{ opacity: 0, y: 10 }}
                 className="w-full flex flex-col gap-8 items-start"
               >
-                {/* MODIFIED: Sized up textual instructions layout framework and removed all transform uppercase properties */}
-                <div className="w-full flex items-center justify-between text-white/50 text-sm md:text-base font-semibold tracking-wide px-1">
-                  <div className="flex items-center gap-2.5">
-                    <History size={16} className="text-white/40" />
-                    <span>Recent searches</span>
+                {/* Two perfectly mirrored glassmorphed layout pills sharing identical height, bounds, and aspects */}
+                <div className="w-full flex items-center justify-between">
+                  
+                  {/* Left Pill: History contextual node display - Wording updated and icon scaled up to 20 */}
+                  <div 
+                    style={{ ...liquidGlassStyle, ...garamondSerifStyle }}
+                    className="h-12 px-6 rounded-full flex items-center gap-3 text-white/80 text-base md:text-lg font-medium shadow-lg"
+                  >
+                    <History size={20} className="text-white/50 shrink-0" />
+                    <span>History</span>
                   </div>
+
+                  {/* Right Pill: Clear All functional control node layout with custom closure X icon */}
                   <button 
                     onClick={clearAllHistory}
-                    className="text-white/40 hover:text-red-400 transition-colors flex items-center gap-1.5 cursor-pointer text-sm md:text-base font-semibold tracking-wide"
+                    style={{ ...liquidGlassStyle, ...garamondSerifStyle }}
+                    className="h-12 px-6 rounded-full flex items-center gap-2.5 text-white/40 hover:text-red-400 transition-colors cursor-pointer text-base md:text-lg font-medium shadow-lg"
                   >
-                    <Trash2 size={14} />
-                    <span>Clear</span>
+                    <X size={14} className="opacity-70 shrink-0" />
+                    <span>Clear all</span>
                   </button>
+
                 </div>
                 
-                {/* Premium Golden Ratio Spaced Shelf Row for History Items - Extracted absolute crosses */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-8 gap-y-12 md:gap-x-10 md:gap-y-14 w-full">
-                  {recentMedia.map((movie) => (
-                    <div key={`history-${movie.id}`} className="relative group/historyCard">
-                      <div onClickCapture={() => handleMediaSelectionSave(movie)}>
-                        <MediaCard movie={movie} size="lg" />
+                {/* Unified history grid container applying a sleek 7.5% scale expansion strictly on component hover states */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-6 w-full">
+                  {recentMedia.map((movie, index) => (
+                    <div key={`history-${movie.id}`} className="relative group rounded-xl overflow-hidden transition-transform duration-300 ease-in-out hover:scale-[1.075]">
+                      
+                      {/* Cancel button shifted precisely 5% right / 7.5% down (top 47.5% / left 45%) to accommodate the requested 2.5% drop */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeHistoryItem(movie.id);
+                        }}
+                        className="peer absolute top-[47.5%] left-[45%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border border-white/10 text-white/60 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer shadow-md"
+                        title="Remove from history"
+                      >
+                        <X size={20} className="shrink-0" />
+                      </button>
+
+                      {/* Content target layer that catches precisely 10% gaussian filtering when the cancel sibling is actively focused */}
+                      <div 
+                        onClickCapture={() => handleMediaSelectionSave(movie)}
+                        className="transition-all duration-300 ease-in-out origin-center peer-hover:blur-[4px]"
+                      >
+                        <MediaCard movie={movie} index={index} size="md" />
                       </div>
                     </div>
                   ))}
@@ -193,7 +240,7 @@ const SearchPage: React.FC = () => {
                     ))}
                   </div>
                 ) : results.length > 0 ? (
-                  /* Data Render Grid - Reconstructed to deliver home showcase display logic metrics */
+                  /* Data Render Grid */
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-8 gap-y-12 md:gap-x-10 md:gap-y-14 w-full">
                     {results.map((movie, i) => (
                       <div key={movie.id} onClickCapture={() => handleMediaSelectionSave(movie)}>
