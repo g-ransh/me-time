@@ -118,7 +118,16 @@ const HomePage: React.FC = () => {
   const processedData = useMemo(() => {
     const trendingResults = trendingQ.data?.results?.map((m: any) => ({ ...m, media_type: m.media_type || 'movie' })) || [];
     const heroMovies = trendingResults.filter((m: any) => m.backdrop_path);
-    const continueMovies = continueWatching.map(c => ({ ...c.movie, media_type: c.type }));
+    
+    // SAFE PARSING ENGINE: Fallbacks seamlessly if your history objects are flat or nested inside .movie
+    const continueMovies = continueWatching.map(c => {
+      const baseMovieData = c?.movie || c;
+      return { 
+        ...baseMovieData, 
+        media_type: c?.type || baseMovieData?.media_type || 'movie' 
+      };
+    });
+
     const mapWithMedia = (data: any, type: 'movie' | 'tv') => data?.results?.map((m: any) => ({ ...m, media_type: type })) || [];
 
     return {

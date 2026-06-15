@@ -93,9 +93,9 @@ const SearchPage: React.FC = () => {
     border: '1px solid rgba(255, 255, 255, 0.06)',
   };
 
-  // Helvetica Neue Medium precise font token assignment configurations
-  const helveticaNeueMediumStyle = {
-    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+  // Premium Apple system serif font typography tokens
+  const appleSerifMediumStyle = {
+    fontFamily: '-apple-system-serif, "New York", "Apple Garamond", Georgia, serif',
     fontWeight: 500,
   };
 
@@ -119,10 +119,10 @@ const SearchPage: React.FC = () => {
       {/* Main Structural Wrapper */}
       <div className="relative z-10 w-full max-w-[1400px] mx-auto px-8 md:px-12 flex flex-col items-center pt-48">
         
-        {/* Swapped to Helvetica Neue Medium, added clean spacing downward and pulled 2.5% vertically via transform inline configurations */}
+        {/* Updated directly to premium system Apple Serif styling configurations */}
         <h1 
-          style={{ ...helveticaNeueMediumStyle, transform: 'translateY(2.5%)' }}
-          className="text-4xl md:text-[44px] text-white text-center mt-6 mb-8 select-none tracking-normal opacity-95"
+          style={{ ...appleSerifMediumStyle, transform: 'translateY(2.5%)' }}
+          className="text-6xl md:text-[44px] text-white text-center mt-6 mb-4 select-none tracking-normal opacity-95"
         >
           What's your next obsession?
         </h1>
@@ -168,22 +168,22 @@ const SearchPage: React.FC = () => {
                 {/* Two perfectly mirrored glassmorphed layout pills sharing identical height, bounds, and aspects */}
                 <div className="w-full flex items-center justify-between">
                   
-                  {/* Left Pill: History contextual node display - Wording updated and icon scaled up to 20 */}
+                  {/* Left Pill: History contextual node display - Switch style mapping token directly to Apple system Serif layout properties */}
                   <div 
-                    style={{ ...liquidGlassStyle, ...garamondSerifStyle }}
+                    style={{ ...liquidGlassStyle, ...appleSerifMediumStyle }}
                     className="h-12 px-6 rounded-full flex items-center gap-3 text-white/80 text-base md:text-lg font-medium shadow-lg"
                   >
                     <History size={20} className="text-white/50 shrink-0" />
                     <span>History</span>
                   </div>
 
-                  {/* Right Pill: Clear All functional control node layout with custom closure X icon */}
+                  {/* Right Pill: Clear All functional control layout - Switch style mapping token directly to Apple system Serif layout properties */}
                   <button 
                     onClick={clearAllHistory}
-                    style={{ ...liquidGlassStyle, ...garamondSerifStyle }}
+                    style={{ ...liquidGlassStyle, ...appleSerifMediumStyle }}
                     className="h-12 px-6 rounded-full flex items-center gap-2.5 text-white/40 hover:text-red-400 transition-colors cursor-pointer text-base md:text-lg font-medium shadow-lg"
                   >
-                    <X size={14} className="opacity-70 shrink-0" />
+                    <X size={15} className="opacity-70 shrink-0" />
                     <span>Clear all</span>
                   </button>
 
@@ -200,16 +200,16 @@ const SearchPage: React.FC = () => {
                           e.stopPropagation();
                           removeHistoryItem(movie.id);
                         }}
-                        className="peer absolute top-[47.5%] left-[45%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-black/90 backdrop-blur-md border border-white/10 text-white/60 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer shadow-md"
+                        className="peer absolute top-[47.5%] left-[45%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.04] backdrop-blur-xl border border-white/10 text-white/60 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 z-30 cursor-pointer shadow-lg"
                         title="Remove from history"
                       >
                         <X size={20} className="shrink-0" />
                       </button>
 
-                      {/* Content target layer that catches precisely 10% gaussian filtering when the cancel sibling is actively focused */}
+                      {/* Content target layer that catches exactly 5% blur filter tokens when cancel button sibling receives active pointer interaction matches */}
                       <div 
                         onClickCapture={() => handleMediaSelectionSave(movie)}
-                        className="transition-all duration-300 ease-in-out origin-center peer-hover:blur-[4px]"
+                        className="transition-all duration-300 ease-in-out origin-center peer-hover:blur-[2px]"
                       >
                         <MediaCard movie={movie} index={index} size="md" />
                       </div>
@@ -223,7 +223,7 @@ const SearchPage: React.FC = () => {
 
         {/* Dynamic Context Results Grid Stage */}
         <div className="w-full relative min-h-[200px] select-none">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {hasSearched && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}

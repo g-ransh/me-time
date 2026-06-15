@@ -118,9 +118,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
             loading="lazy"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/[0.02]">
-            <Film size={20} className="text-white/20" />
-          </div>
+          <div className="absolute inset-0 bg-[#141416] animate-pulse" />
         )}
 
         {/* ── Dynamic Hover Action Overlay and Analytics System ── */}

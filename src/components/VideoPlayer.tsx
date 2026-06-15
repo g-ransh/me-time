@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Film, Tv } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { getTVDetails, getTVSeasonDetails } from '../lib/tmdb';
 
@@ -70,11 +70,9 @@ const VideoPlayer: React.FC = () => {
   }, [playerMedia, currentProvider, season, episode]);
 
   // ── LOCAL STORAGE PERSISTENCE ENGINE ──
-  // Saves data immediately on load to make sure you never lose your spot, even if the state drops out
   useEffect(() => {
     if (!isPlayerOpen || !playerMedia) return;
 
-    // Type-safe bypass variables to safely extract full asset image metadata arrays
     const mediaAsset = playerMedia as any;
 
     const historyItem = {
@@ -85,14 +83,21 @@ const VideoPlayer: React.FC = () => {
       title: mediaAsset.title || mediaAsset.name || 'Unknown Title',
       poster_path: mediaAsset.poster_path || null,
       backdrop_path: mediaAsset.backdrop_path || null,
+      movie: {
+        ...mediaAsset,
+        id: playerMedia.id,
+        title: mediaAsset.title || mediaAsset.name || 'Unknown Title',
+        name: mediaAsset.name || mediaAsset.title || 'Unknown Title',
+        poster_path: mediaAsset.poster_path || null,
+        backdrop_path: mediaAsset.backdrop_path || null,
+        media_type: playerMedia.type
+      },
       watchedAt: Date.now()
     };
 
-    // Pull history tracking arrays safely out of local browser cache records
     const currentHistory = JSON.parse(localStorage.getItem('orb_continue_watching') || '[]');
     const filteredHistory = currentHistory.filter((item: any) => item.id !== playerMedia.id);
     
-    // Add the new item right to the front of the queue
     localStorage.setItem('orb_continue_watching', JSON.stringify([historyItem, ...filteredHistory]));
   }, [playerMedia?.id, season, episode, isPlayerOpen]);
 
@@ -110,8 +115,7 @@ const VideoPlayer: React.FC = () => {
     setPanelLoading(false);
   }, [playerMedia?.id]);
 
-  // ── IMPROVED AUTOMATED SERVER ROTATION SYSTEM ──
-  // Tracks your connection status safely. Automatically shifts servers if it jams on an infinite loading state.
+  // ── AUTOMATED SERVER ROTATION SYSTEM ──
   useEffect(() => {
     if (loadStatus !== 'loading') {
       if (autoFallbackRef.current) clearTimeout(autoFallbackRef.current);
@@ -122,7 +126,7 @@ const VideoPlayer: React.FC = () => {
       console.warn(`Server ${providerIndex + 1} timed out or failed to resolve. Shifting to backup nodes.`);
       setProviderIndex(p => (p + 1) % PROVIDERS.length);
       setIframeKey(k => k + 1);
-    }, 9000); // Trigger a backup server shift if a connection takes longer than 9 seconds
+    }, 9000);
 
     return () => { if (autoFallbackRef.current) clearTimeout(autoFallbackRef.current); };
   }, [loadStatus, providerIndex]);
@@ -156,7 +160,7 @@ const VideoPlayer: React.FC = () => {
         else if (showSourceMenu) setShowSourceMenu(false);
         else setIsPlayerOpen(false);
       }
-        if (e.key === ' ') {
+      if (e.key === ' ') {
         e.preventDefault();
         setIsPlaying(p => !p);
       }
@@ -219,10 +223,6 @@ const VideoPlayer: React.FC = () => {
                 <ArrowLeft size={16} />
               </button>
               <div className="min-w-0 text-left">
-                <p className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-black mb-0.5 flex items-center gap-1.5">
-                  {type === 'tv' ? <Tv size={10} /> : <Film size={10} />}
-                  <span>{type === 'tv' ? 'Series Track' : 'Feature Film'}</span>
-                </p>
                 <p className="text-white/90 font-bold text-sm md:text-base tracking-tight truncate">
                   {type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Feature Presentation'}
                 </p>
@@ -233,10 +233,9 @@ const VideoPlayer: React.FC = () => {
               {type === 'tv' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setPanelSeason(season); setIsPanelOpen(true); }}
-                  className="px-4 py-1.5 rounded-full text-xs font-bold text-white flex items-center gap-2 border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer shadow-lg group"
-                  style={{ backdropFilter: 'blur(20px)' }}
+                  className="px-4 py-1.5 rounded-full text-xs font-bold text-white flex items-center border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer shadow-lg group"
+                  style={{ backdropFilter: 'blur(20px)', scale: 1.025 }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] animate-pulse" />
                   <span className="text-white/90 group-hover:text-white transition-colors">{`S${season} · E${episode}`}</span>
                 </button>
               )}
@@ -244,9 +243,9 @@ const VideoPlayer: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowSourceMenu(s => !s)}
-                  className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold text-white/80 hover:text-white border border-white/5 bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all cursor-pointer"
+                  className="flex items-center px-4 py-1.5 rounded-full text-xs font-bold text-white/80 hover:text-white border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer shadow-lg"
+                  style={{ backdropFilter: 'blur(20px)', scale: 1.025 }}
                 >
-                  <span className="w-1 h-1 rounded-full bg-green-400" />
                   <span>{currentProvider.name}</span>
                 </button>
 
@@ -257,7 +256,12 @@ const VideoPlayer: React.FC = () => {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -5 }}
                       className="absolute right-0 top-full mt-2 w-44 rounded-2xl overflow-hidden p-1.5 border border-white/10 shadow-2xl"
-                      style={{ background: 'rgba(10,10,14,0.95)', backdropFilter: 'blur(30px)' }}
+                      style={{ 
+                        backgroundColor: 'rgba(12, 12, 16, 0.45)', 
+                        backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%)',
+                        backdropFilter: 'blur(30px) saturate(160%) brightness(110%)',
+                        WebkitBackdropFilter: 'blur(30px) saturate(160%) brightness(110%)'
+                      }}
                     >
                       {PROVIDERS.map((p, i) => (
                         <button
@@ -308,7 +312,6 @@ const VideoPlayer: React.FC = () => {
               className="w-full h-full border-0 absolute inset-0"
               allowFullScreen
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture; xr-spatial-tracking"
-              sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
               loading="eager"
               title="Video Feed Content"
               {...{ fetchpriority: "high" }} 
@@ -316,13 +319,22 @@ const VideoPlayer: React.FC = () => {
                 setLoadStatus('loaded');
                 
                 if (playerMedia) {
+                  const mediaAsset = playerMedia as any;
                   try {
                     addToContinueWatching({
                       id: playerMedia.id,
                       type: playerMedia.type,
                       season: type === 'tv' ? season : undefined,
                       episode: type === 'tv' ? episode : undefined,
-                      movie: playerMedia as any 
+                      movie: {
+                        ...mediaAsset,
+                        id: playerMedia.id,
+                        title: mediaAsset.title || mediaAsset.name || 'Unknown Title',
+                        name: mediaAsset.name || mediaAsset.title || 'Unknown Title',
+                        poster_path: mediaAsset.poster_path || null,
+                        backdrop_path: mediaAsset.backdrop_path || null,
+                        media_type: playerMedia.type
+                      }
                     });
                   } catch (e) {
                     console.warn("Store sync paused. Local cache storage handled safely instead.", e);
@@ -341,11 +353,11 @@ const VideoPlayer: React.FC = () => {
                   initial={{ scale: 0.97, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.97, opacity: 0, y: 20 }}
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-4xl h-[76vh] z-[101] rounded-3xl p-6 md:p-8 flex flex-col overflow-hidden text-left"
                   style={{
-                    backgroundColor: 'rgba(12, 12, 16, 0.6)',
-                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.005) 100%)',
-                    backdropFilter: 'blur(50px) saturate(220%) brightness(115%)',
-                    WebkitBackdropFilter: 'blur(50px) saturate(220%) brightness(115%)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    backgroundColor: 'rgba(10, 10, 14, 0.45)',
+                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%)',
+                    backdropFilter: 'blur(45px) saturate(180%) brightness(110%)',
+                    WebkitBackdropFilter: 'blur(45px) saturate(180%) brightness(110%)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     boxShadow: '0 35px 80px -20px rgba(0, 0, 0, 0.95), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
                   }}
                 >
