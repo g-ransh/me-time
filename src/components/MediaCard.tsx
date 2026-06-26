@@ -5,6 +5,7 @@ import { Play, Star, X, Film, Plus, Check, Sparkles, Layers, Info } from 'lucide
 import { Movie } from '../types';
 import { getPosterUrl, getBackdropUrl, getTitle, getReleaseYear } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
+import { GlassButton } from './ui/GlassButton';
 
 interface MediaCardProps {
   movie: Movie;
@@ -71,7 +72,15 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
   const mediaType = movie.media_type === 'tv' ? 'tv' : 'movie';
 
   const cardWidths = { sm: 'w-[140px] md:w-[150px]', md: 'w-[160px] md:w-[180px]', lg: 'w-[200px] md:w-[220px]' };
-  const uniformGlassStyle = "h-9 px-4 rounded-md bg-black/40 backdrop-blur-md border border-white/5 text-white text-xs font-bold flex items-center justify-center gap-2 select-none tracking-wide transition-colors";
+
+  // System glass configuration metrics
+  const navbarMatchGlassStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(13, 17, 23, 0.1)',
+    backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    border: 'none',
+    boxShadow: '0 1px 1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  };
 
   const handleInfoAction = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -121,41 +130,51 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
           <div className="absolute inset-0 bg-[#141416] animate-pulse" />
         )}
 
-        {/* ── Dynamic Hover Action Overlay and Analytics System ── */}
+        {/* Permanent Micro Brownian Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50 z-20 pointer-events-none" />
+
+        {/* ── Dynamic Hover Functional Controls Sub-Overlay System ── */}
         <AnimatePresence>
           {isHovered && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 z-20"
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 z-30 pointer-events-none"
             >
-              {/* Micro Brownian Blur and Dark Gradient Shadow Mask Layout */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 backdrop-blur-[0.5px]" />
-
               {/* Top Left Glassmorphed Ratings Pill */}
               {movie.vote_average > 0 && (
-                <div className="absolute top-2.5 left-2.5 h-6 px-2 rounded-full border border-white/[0.08] bg-black/40 backdrop-blur-md flex items-center gap-1 text-[11px] font-bold text-amber-400 shadow-sm">
-                  <Star size={10} className="fill-current text-amber-400" />
-                  <span>{movie.vote_average.toFixed(1)}</span>
+                <div className="pointer-events-auto">
+                  <GlassButton
+                    variant="text"
+                    className="absolute top-2.5 left-2.5 !h-6 !px-2 !rounded-full text-[11px] font-bold text-amber-400 pointer-events-none flex items-center justify-center"
+                    style={navbarMatchGlassStyle}
+                  >
+                    <Star size={10} className="fill-current text-amber-400 mr-1 shrink-0" />
+                    <span className="leading-none mt-[0.5px]">{movie.vote_average.toFixed(1)}</span>
+                  </GlassButton>
                 </div>
               )}
 
               {/* Plus Icon Watchlist Trigger Button */}
-              <button
-                onClick={handleWatchlistAction}
-                className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center border border-white/[0.08] bg-white/[0.06] backdrop-blur-[20px] -webkit-backdrop-blur-[20px] text-white/80 hover:text-white hover:bg-white/[0.15] transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-              >
-                {inWatchlist ? <Check size={14} className="text-green-400" /> : <Plus size={14} />}
-              </button>
+              <div className="pointer-events-auto">
+                <GlassButton
+                  variant="icon"
+                  onClick={handleWatchlistAction}
+                  className="absolute top-2.5 right-2.5 !w-8 !h-8 !rounded-full text-white/80 hover:text-white flex items-center justify-center"
+                  style={navbarMatchGlassStyle}
+                >
+                  {inWatchlist ? <Check size={14} className="text-green-400" /> : <Plus size={14} />}
+                </GlassButton>
+              </div>
 
-              {/* ── Bottom Left Title Text Wrapper Component Layer ── */}
+              {/* Text Layout Overlay */}
               <motion.div 
                 initial={{ y: 4, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 4, opacity: 0 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="absolute bottom-3.5 left-3.5 right-3.5 text-left flex flex-col gap-0.5 pointer-events-none"
               >
                 <h3 className="text-xs md:text-sm font-bold text-white leading-snug tracking-wide truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
@@ -183,7 +202,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
               exit={{ opacity: 0, scale: 1, y: 0 }}
               transition={{ duration: 0.15 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-4xl rounded-3xl overflow-hidden bg-[#0a0a0c] text-left mx-auto my-auto max-h-[92vh] flex flex-col justify-start border border-white/5 shadow-[0_30px_70px_-10px_rgba(0,0,0,0.95)]"
+              className="relative w-full max-w-[4xl] rounded-3xl overflow-hidden bg-[#0a0a0c] text-left mx-auto my-auto max-h-[92vh] flex flex-col justify-start border border-white/5 shadow-[0_30px_70px_-10px_rgba(0,0,0,0.95)]"
             >
               
               {/* Cinematic Billboard Banner Header Showcase Area */}
@@ -197,12 +216,14 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0c]/60 via-transparent to-transparent" />
 
                 {/* Securely Anchored Fixed Upper Right Close/Exit Trigger Button */}
-                <button 
+                <GlassButton 
+                  variant="icon"
                   onClick={() => setShowDetails(false)}
-                  className="absolute top-6 right-6 w-9 h-9 rounded-md bg-black/40 backdrop-blur-md border border-white/5 flex items-center justify-center text-white cursor-pointer z-50 hover:bg-black/60 transition-colors"
+                  className="absolute top-6 right-6 !w-9 !h-9 !rounded-md text-white z-50 flex items-center justify-center"
+                  style={navbarMatchGlassStyle}
                 >
                   <X size={15} />
-                </button>
+                </GlassButton>
 
                 {/* Foreground Text Layer Overlays */}
                 <div className="absolute bottom-6 left-6 right-6 z-20 flex flex-col justify-end text-left items-start">
@@ -212,28 +233,28 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
 
                   {/* Glass Transparent Blurred Badge Pills row */}
                   <div className="flex flex-wrap items-center gap-2 mb-5 font-sans">
-                    <div className="h-7 px-2.5 rounded-md bg-black/40 backdrop-blur-md border border-white/5 flex items-center gap-1 text-xs font-bold text-amber-400">
-                      <Star size={10} className="fill-current text-amber-400" />
+                    <GlassButton variant="text" className="!h-7 !px-2.5 !rounded-md text-xs font-bold text-amber-400 pointer-events-none flex items-center justify-center" style={navbarMatchGlassStyle}>
+                      <Star size={10} className="fill-current text-amber-400 mr-1" />
                       <span>{movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}/10</span>
-                    </div>
-                    <div className="h-7 px-2.5 rounded-md bg-black/40 backdrop-blur-md border border-white/5 flex items-center text-xs font-bold text-white/70">
+                    </GlassButton>
+                    <GlassButton variant="text" className="!h-7 !px-2.5 !rounded-md text-xs font-bold text-white/70 pointer-events-none flex items-center justify-center" style={navbarMatchGlassStyle}>
                       {year}
-                    </div>
-                    <div className="h-7 px-2.5 rounded-md bg-black/40 backdrop-blur-md border border-white/5 flex items-center text-xs font-bold text-white/70">
+                    </GlassButton>
+                    <GlassButton variant="text" className="!h-7 !px-2.5 !rounded-md text-xs font-bold text-white/70 pointer-events-none flex items-center justify-center" style={navbarMatchGlassStyle}>
                       1 Season
-                    </div>
+                    </GlassButton>
                     <div className="h-7 bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 rounded-md text-[10px] font-black tracking-wider flex items-center uppercase">
                       TV-MA
                     </div>
-                    <div className="h-7 px-2.5 rounded-md bg-black/40 backdrop-blur-md border border-white/5 flex items-center text-xs font-bold text-white/50">
+                    <GlassButton variant="text" className="!h-7 !px-2.5 !rounded-md text-xs font-bold text-white/50 pointer-events-none flex items-center justify-center" style={navbarMatchGlassStyle}>
                       {genre}
-                    </div>
-                    <div className="h-7 px-2.5 rounded-md bg-black/40 backdrop-blur-md border border-white/5 flex items-center text-xs font-bold text-white/50">
+                    </GlassButton>
+                    <GlassButton variant="text" className="!h-7 !px-2.5 !rounded-md text-xs font-bold text-white/50 pointer-events-none flex items-center justify-center" style={navbarMatchGlassStyle}>
                       Drama
-                    </div>
+                    </GlassButton>
                   </div>
 
-                  {/* Standard Sized Action Layout Matrix */}
+                  {/* Action Layout Matrix */}
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => { setPlayerMedia({ id: movie.id, type: 'tv', movie }); setIsPlayerOpen(true); setShowDetails(false); }}
@@ -242,30 +263,34 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
                       <Play size={12} className="fill-black text-black" />
                       <span>Play S1 E1</span>
                     </button>
-                    <button 
+                    <GlassButton 
+                      variant="text"
                       onClick={() => { setPlayerMedia({ id: movie.id, type: 'tv', movie }); setIsPlayerOpen(true); setShowDetails(false); }}
-                      className={`cursor-pointer ${uniformGlassStyle}`}
+                      className="!h-9 !px-4 !rounded-md text-xs font-bold flex items-center justify-center"
+                      style={navbarMatchGlassStyle}
                     >
                       <span>Trailer</span>
-                    </button>
-                    <button 
+                    </GlassButton>
+                    <GlassButton 
+                      variant="icon"
                       onClick={handleWatchlistAction}
-                      className={`w-9 cursor-pointer font-bold ${uniformGlassStyle}`}
+                      className="!w-9 !h-9 !rounded-md text-xs font-bold flex items-center justify-center"
+                      style={navbarMatchGlassStyle}
                     >
                       <span>{inWatchlist ? '✕' : '+'}</span>
-                    </button>
+                    </GlassButton>
                   </div>
                 </div>
               </div>
 
-              {/* Lower Section Scrolling Panel Slots */}
+              {/* Lower Section Panels */}
               <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-8 font-sans">
                 
                 <p className="text-white/50 text-sm leading-relaxed max-w-3xl text-left font-normal">
                   {movie.overview || 'No presentation logging cataloged for this specific archival showcase frame.'}
                 </p>
 
-                {/* Technical Structural System Logging Analytics Row */}
+                {/* Technical System Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
                   <div className="bg-white/[0.01] border border-white/5 p-3 rounded-xl flex items-center gap-3">
                     <Sparkles size={14} className="text-orange-500 shrink-0" />
@@ -297,7 +322,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
                   </div>
                 </div>
 
-                {/* Seasons Selector Strip Layout */}
+                {/* Seasons Switcher */}
                 <div className="border-t border-white/5 pt-6">
                   <div className="flex items-center justify-between mb-4 pl-0.5">
                     <h3 className="text-lg font-black text-white tracking-tight uppercase">Episodes</h3>
@@ -305,21 +330,23 @@ export const MediaCard: React.FC<MediaCardProps> = ({ movie, index = 0, size = '
 
                   <div className="flex items-center gap-2 overflow-x-auto pb-1.5 border-b border-white/5 mb-4">
                     {SEASONS.map((season) => (
-                      <button
+                      <GlassButton
                         key={season}
+                        variant="text"
                         onClick={() => setActiveSeason(season)}
-                        className={`px-4 py-1.5 h-8 rounded-md text-xs font-bold cursor-pointer whitespace-nowrap border transition-all ${
-                          activeSeason === season 
-                            ? 'bg-white/5 border-white/10 text-white' 
-                            : 'bg-transparent border-transparent text-white/30 hover:text-white/60'
-                        }`}
+                        className={`!px-4 !py-1.5 !h-8 !rounded-md text-xs font-bold whitespace-nowrap flex items-center justify-center`}
+                        style={{
+                          ...navbarMatchGlassStyle,
+                          backgroundColor: activeSeason === season ? 'rgba(255,255,255,0.05)' : 'transparent',
+                          color: activeSeason === season ? '#ffffff' : 'rgba(255,255,255,0.3)'
+                        }}
                       >
                         {season}
-                      </button>
+                      </GlassButton>
                     ))}
                   </div>
 
-                  {/* Episode Content Track Arrays */}
+                  {/* Episode List */}
                   <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
                     {MOCK_EPISODES.map((ep, idx) => (
                       <div 

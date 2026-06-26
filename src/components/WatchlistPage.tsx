@@ -18,16 +18,24 @@ const WatchlistPage: React.FC = () => {
     return true;
   });
 
-  // Premium Translucent Fluid Water design token with matching 20px blur distributions
-  const fluidWaterStyle: React.CSSProperties = {
-    backgroundColor: 'rgba(16, 16, 20, 0.3)',
-    backdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
-    fontFamily: '"Inter", sans-serif',
+  // Premium Translucent Crystal Glass Shared Tokens (Matching your exact global app language)
+  const crystalGlassStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.01) 100%)',
+    backdropFilter: 'blur(4px) saturate(170%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(170%) brightness(100%)',
+    border: '1px solid rgba(255, 255, 255, 0.13)',
+    boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.15)',
   };
 
   return (
-    <div className="min-h-screen bg-transparent pt-32 px-8 md:px-16 lg:px-24 pb-24 text-white select-none">
+    <div 
+      className="min-h-screen pt-32 px-8 md:px-16 lg:px-24 pb-24 text-white select-none transition-colors duration-500"
+      style={{
+        background: 'radial-gradient(circle at 50% -20%, rgba(249, 115, 22, 0.45) 0%, rgba(2, 2, 4, 1) 65%)',
+        backgroundColor: '#020204'
+      }}
+    >
       <div className="max-w-[1400px] mx-auto">
         
         {/* ── Page Header Title ── */}
@@ -38,7 +46,7 @@ const WatchlistPage: React.FC = () => {
           className="mb-8"
         >
           <h1 className="text-[34px] font-bold tracking-tight text-white antialiased">
-            My Lists
+            Watch List
           </h1>
         </motion.div>
 
@@ -51,13 +59,21 @@ const WatchlistPage: React.FC = () => {
             exit={{ opacity: 0 }}
           >
             {watchlist.length === 0 ? (
-              /* Empty Watchlist State */
+              /* Empty Watchlist State styled matching premium container tokens */
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.45 }}
-                className="flex flex-col items-center justify-center py-36 text-center"
+                className="flex flex-col items-center justify-center py-36 text-center rounded-2xl"
+                style={{
+                  backgroundColor: 'rgba(10, 10, 14, 0.05)',
+                  backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.03) 100%)',
+                  backdropFilter: 'blur(4px) saturate(180%) brightness(100%)',
+                  WebkitBackdropFilter: 'blur(4px) saturate(180%) brightness(100%)',
+                  border: 'none',
+                  boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.1)'
+                }}
               >
                 <div className="text-white/90 mb-5 select-none">
                   <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white/80">
@@ -69,7 +85,7 @@ const WatchlistPage: React.FC = () => {
                     <path d="M18 36H42" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <h3 className="text-[17px] font-bold text-white/80 mb-1.5 tracking-wide font-sans">Your lists are empty</h3>
+                <h3 className="text-[17px] font-medium text-white/80 mb-1.5 tracking-wide font-sans">Your list is empty</h3>
                 <p className="text-white/35 text-[13.5px] max-w-sm font-medium leading-normal tracking-wide font-sans">
                   Add movies and series using the '+' icon on their cards.
                 </p>
@@ -77,19 +93,90 @@ const WatchlistPage: React.FC = () => {
             ) : (
               /* Watchlist Active Layout Display */
               <>
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-8 font-sans">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setMediaFilter('all')} className="h-7 px-3.5 rounded-full text-[12px] font-bold border cursor-pointer" style={{ backgroundColor: mediaFilter === 'all' ? 'rgba(255, 255, 255, 0.08)' : 'transparent', borderColor: mediaFilter === 'all' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)', color: mediaFilter === 'all' ? '#ffffff' : 'rgba(255, 255, 255, 0.45)' }}>All</button>
-                    <button onClick={() => setMediaFilter('movies')} className="h-7 px-3.5 rounded-full text-[12px] font-bold flex items-center gap-1.5 border cursor-pointer" style={{ backgroundColor: mediaFilter === 'movies' ? 'rgba(255, 255, 255, 0.08)' : 'transparent', borderColor: mediaFilter === 'movies' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)', color: mediaFilter === 'movies' ? '#ffffff' : 'rgba(255, 255, 255, 0.45)' }}><Film size={11} /><span>Movies</span></button>
-                    <button onClick={() => setMediaFilter('series')} className="h-7 px-3.5 rounded-full text-[12px] font-bold flex items-center gap-1.5 border cursor-pointer" style={{ backgroundColor: mediaFilter === 'series' ? 'rgba(255, 255, 255, 0.08)' : 'transparent', borderColor: mediaFilter === 'series' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)', color: mediaFilter === 'series' ? '#ffffff' : 'rgba(255, 255, 255, 0.45)' }}><Tv size={11} /><span>Series</span></button>
-                    <button onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')} className="h-7 px-3.5 rounded-full text-[12px] font-bold bg-transparent border border-white/[0.05] text-white/45 flex items-center gap-1.5 hover:text-white/80 transition-colors cursor-pointer"><ArrowUpDown size={11} /><span className="capitalize">{sortOrder}</span></button>
+                <motion.div 
+                  initial={{ opacity: 0, y: 4 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="flex items-center justify-between mb-8 font-sans pointer-events-auto"
+                >
+                  {/* Dynamic control rows adjusted with precise Golden Ratio parameters */}
+                  <div className="flex items-center gap-[10px]">
+                    <motion.button 
+                      onClick={() => setMediaFilter('all')} 
+                      className="h-9 px-[21px] rounded-full text-[12px] font-medium transition-all cursor-pointer flex items-center justify-center text-white" 
+                      style={{ 
+                        ...crystalGlassStyle,
+                        backgroundColor: mediaFilter === 'all' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(255, 255, 255, 0.05)', 
+                        borderColor: mediaFilter === 'all' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0)',
+                        color: mediaFilter === 'all' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
+                      }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      All
+                    </motion.button>
+                    
+                    <motion.button 
+                      onClick={() => setMediaFilter('movies')} 
+                      className="h-9 px-[21px] rounded-full text-[12px] font-medium flex items-center gap-1.5 transition-all cursor-pointer text-white" 
+                      style={{ 
+                        ...crystalGlassStyle,
+                        backgroundColor: mediaFilter === 'movies' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(255, 255, 255, 0.04)', 
+                        borderColor: mediaFilter === 'movies' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0)',
+                        color: mediaFilter === 'movies' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
+                      }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Film size={12} />
+                      <span>Movies</span>
+                    </motion.button>
+
+                    <motion.button 
+                      onClick={() => setMediaFilter('series')} 
+                      className="h-9 px-[21px] rounded-full text-[12px] font-medium flex items-center gap-1.5 transition-all cursor-pointer text-white" 
+                      style={{ 
+                        ...crystalGlassStyle,
+                        backgroundColor: mediaFilter === 'series' ? 'rgba(239, 68, 68, 0.85)' : 'rgba(255, 255, 255, 0.04)', 
+                        borderColor: mediaFilter === 'series' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0)',
+                        color: mediaFilter === 'series' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
+                      }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Tv size={12} />
+                      <span>Series</span>
+                    </motion.button>
+
+                    <motion.button 
+                      onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')} 
+                      className="h-9 px-[21px] rounded-full text-[12px] font-medium flex items-center gap-1.5 text-white/50 transition-all cursor-pointer"
+                      style={{ 
+                        ...crystalGlassStyle,
+                        backgroundColor: 'rgba(255, 255, 255, 0.04)', 
+                        borderColor: 'rgba(255, 255, 255, 0.13)',
+                        color: 'rgba(255, 255, 255, 0.5)'
+                      }}
+                      whileHover={{ scale: 1.03, color: '#ffffff' }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <ArrowUpDown size={12} />
+                      <span className="capitalize">{sortOrder}</span>
+                    </motion.button>
                   </div>
                 </motion.div>
 
+                {/* Media Cards Canvas Layout Grid */}
                 <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-6">
                   <AnimatePresence mode="popLayout">
                     {(sortOrder === 'newest' ? filteredWatchlist : [...filteredWatchlist].reverse()).map((movie, index) => (
-                      <motion.div key={movie.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative rounded-xl overflow-hidden">
+                      <motion.div 
+                        key={movie.id} 
+                        layout 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="relative rounded-xl overflow-hidden"
+                      >
                         <MediaCard movie={movie} index={index} size="md" />
                       </motion.div>
                     ))}

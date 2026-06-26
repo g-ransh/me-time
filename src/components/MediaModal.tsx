@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Star, Film, Bookmark, Calendar, Clock, Tv } from 'lucide-react';
+import { X, Play, Film, Bookmark, Calendar, Clock, Tv, Star } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { getMovieDetails, getTVDetails, getBackdropUrl, getPosterUrl, getTitle, getReleaseYear } from '../lib/tmdb';
 import { Movie, MovieDetails } from '../types';
+import { GlassButton } from './ui/GlassButton';
 
 const LOGO_BASE = 'https://image.tmdb.org/t/p/w500';
 
@@ -104,37 +105,38 @@ const MediaModal: React.FC = () => {
   };
   const cert = getCert();
 
-  const liquidGlassStyle: React.CSSProperties = {
-    background: 'rgba(10, 10, 12, 0.42)',
-    backdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
-    WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
-    border: '1px solid rgba(255, 255, 255, 0.11)',
-    fontFamily: '"Inter", sans-serif',
+  // Your system glass style configuration token metrics
+  const navbarMatchGlassStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(13, 17, 23, 0.1)',
+    backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    border: 'none',
+    boxShadow: '0 1px 1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   };
 
+  // Restructured to utilize a clean 20% alpha dark glass tint mapping matching your colors exactly
   const getRatingStyle = (rating: string): React.CSSProperties => {
     const baseGlow = {
-      backdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
-      WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
-      fontFamily: '"Inter", sans-serif',
+      backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+      WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+      border: 'none',
+      boxShadow: '0 1px 1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
     };
     
     if (rating === 'R' || rating === 'TV-MA') {
-      return { ...baseGlow, background: 'rgba(239, 68, 68, 0.22)', border: '1px solid rgba(239, 68, 68, 0.45)', color: '#f87171' };
+      return { ...baseGlow, backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#f87171' };
     }
     if (rating === 'PG-13' || rating === 'TV-14') {
-      return { ...baseGlow, background: 'rgba(251, 191, 36, 0.22)', border: '1px solid rgba(251, 191, 36, 0.45)', color: '#fbbf24' };
+      return { ...baseGlow, backgroundColor: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' };
     }
     if (rating === 'PG' || rating === 'TV-PG') {
-      return { ...baseGlow, background: 'rgba(96, 165, 250, 0.22)', border: '1px solid rgba(96, 165, 250, 0.45)', color: '#60a5fa' };
+      return { ...baseGlow, backgroundColor: 'rgba(96, 165, 250, 0.2)', color: '#60a5fa' };
     }
     if (rating === 'G' || rating === 'TV-G' || rating === 'TV-Y7') {
-      return { ...baseGlow, background: 'rgba(74, 222, 128, 0.22)', border: '1px solid rgba(74, 222, 128, 0.45)', color: '#4ade80' };
+      return { ...baseGlow, backgroundColor: 'rgba(74, 222, 128, 0.2)', color: '#4ade80' };
     }
-    return liquidGlassStyle;
+    return navbarMatchGlassStyle;
   };
-
-  const pillClass = 'h-[32px] px-4 rounded-full flex items-center gap-2 text-[13px] font-bold whitespace-nowrap select-none text-white';
 
   return (
     <AnimatePresence>
@@ -154,7 +156,6 @@ const MediaModal: React.FC = () => {
             style={{
               background: '#0a0a0c',
               border: '1px solid rgba(255,255,255,0.06)',
-              /* Ironclad Override: Eradicates cascaded border shadow outline loops */
               boxShadow: 'none',
             }}
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -163,19 +164,14 @@ const MediaModal: React.FC = () => {
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             {/* Close Overlay Controller Button */}
-            <motion.button
+            <GlassButton
+              variant="icon"
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full flex items-center justify-center active:scale-90 cursor-pointer shadow-lg group text-white border border-white/10 bg-white/5 hover:text-[#ef4444] hover:border-[#ef4444]/30 hover:bg-[#ef4444]/10"
-              whileHover={{ rotate: 90 }}
-              /* Sped up duration matching parameters exactly to a 300ms tween block */
-              transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
-              style={{
-                backdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
-                WebkitBackdropFilter: 'blur(24px) saturate(200%) brightness(1.05)',
-              }}
+              className="absolute top-4 right-4 z-50 !w-10 !h-10 !rounded-full text-white hover:!text-[#ef4444]"
+              style={navbarMatchGlassStyle}
             >
-              <X size={18} className="transition-colors duration-200" />
-            </motion.button>
+              <X size={18} />
+            </GlassButton>
 
             <div className="overflow-y-auto flex-1 pb-10" style={{ scrollbarWidth: 'none' }}>
               
@@ -229,34 +225,34 @@ const MediaModal: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Exact 6-Pill Structural Metadata Array Row */}
+                    {/* Exact 6-Pill Structural Metadata Array Row — Fixed compile parameters */}
                     <div className="flex items-center gap-2 flex-wrap" style={{ fontFamily: '"Inter", sans-serif' }}>
-                      <div className={pillClass} style={liquidGlassStyle}>
-                        <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
+                      <GlassButton variant="text" className="!h-[32px] !px-4 !rounded-full text-[13px] font-bold text-white pointer-events-none" style={navbarMatchGlassStyle}>
+                        <Star size={12} className="text-amber-400 fill-amber-400 shrink-0 mr-1.5" />
                         <span>{displayData.vote_average?.toFixed(1) || '7.4'}</span>
-                      </div>
+                      </GlassButton>
 
-                      <div className={pillClass} style={liquidGlassStyle}>
-                        <Calendar size={12} className="text-white/60 shrink-0" />
+                      <GlassButton variant="text" className="!h-[32px] !px-4 !rounded-full text-[13px] font-bold text-white pointer-events-none" style={navbarMatchGlassStyle}>
+                        <Calendar size={12} className="text-white/60 shrink-0 mr-1.5" />
                         <span>{year}</span>
-                      </div>
+                      </GlassButton>
 
-                      <div className={pillClass} style={liquidGlassStyle}>
-                        {isTV ? <Tv size={12} className="text-white/60 shrink-0" /> : <Clock size={12} className="text-white/60 shrink-0" />}
+                      <GlassButton variant="text" className="!h-[32px] !px-4 !rounded-full text-[13px] font-bold text-white pointer-events-none" style={navbarMatchGlassStyle}>
+                        {isTV ? <Tv size={12} className="text-white/60 shrink-0 mr-1.5" /> : <Clock size={12} className="text-white/60 shrink-0 mr-1.5" />}
                         <span>{runtime}</span>
-                      </div>
+                      </GlassButton>
 
-                      <div className={pillClass} style={getRatingStyle(cert)}>
+                      <GlassButton variant="text" className="!h-[32px] !px-4 !rounded-full text-[13px] font-bold pointer-events-none" style={getRatingStyle(cert)}>
                         <span className="tracking-wider">{cert}</span>
-                      </div>
+                      </GlassButton>
 
-                      <div className={pillClass} style={liquidGlassStyle}>
+                      <GlassButton variant="text" className="!h-[32px] !px-4 !rounded-full text-[13px] font-bold text-white pointer-events-none" style={navbarMatchGlassStyle}>
                         <span>{details?.genres?.[0]?.name || 'Action'}</span>
-                      </div>
+                      </GlassButton>
 
-                      <div className={pillClass} style={liquidGlassStyle}>
+                      <GlassButton variant="text" className="!h-[32px] !px-4 !rounded-full text-[13px] font-bold text-white pointer-events-none" style={navbarMatchGlassStyle}>
                         <span>{details?.genres?.[1]?.name || 'Cinematic'}</span>
-                      </div>
+                      </GlassButton>
                     </div>
                   </div>
                 )}
@@ -265,46 +261,43 @@ const MediaModal: React.FC = () => {
               {/* ── Core Action Buttons Utilities Bar ── */}
               {!loading && (
                 <div className="px-8 md:px-10 pt-6 pb-4 flex items-center gap-3 flex-wrap" style={{ fontFamily: '"Inter", sans-serif' }}>
-                  <motion.button
+                  <GlassButton
+                    variant="text"
                     onClick={() => {
                       setPlayerMedia({ id: selectedMedia.id, type: mediaType, season: 1, episode: 1 });
                       setIsPlayerOpen(true);
                       setIsModalOpen(false);
                     }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="h-[40px] px-6 rounded-full flex items-center gap-2 cursor-pointer shadow-md"
-                    style={liquidGlassStyle}
+                    className="!h-[40px] !px-6 !text-[14px]"
+                    style={navbarMatchGlassStyle}
                   >
-                    <Play size={14} className="fill-white text-white shrink-0" />
-                    <span className="text-white text-[14px] font-bold">Play</span>
-                  </motion.button>
+                    <Play size={14} className="fill-white text-white shrink-0 mr-2" />
+                    <span>Play</span>
+                  </GlassButton>
 
                   {trailer && (
-                    <motion.button
+                    <GlassButton
+                      variant="text"
                       onClick={() => setShowTrailer(t => !t)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="h-[40px] px-6 rounded-full text-white text-[14px] font-bold flex items-center gap-2 cursor-pointer transition-all"
-                      style={liquidGlassStyle}
+                      className="!h-[40px] !px-6 !text-[14px]"
+                      style={navbarMatchGlassStyle}
                     >
-                      <Film size={14} className="shrink-0" />
+                      <Film size={14} className="shrink-0 mr-2" />
                       <span>{showTrailer ? 'Close' : 'Trailer'}</span>
-                    </motion.button>
+                    </GlassButton>
                   )}
 
-                  <motion.button
+                  <GlassButton
+                    variant="icon"
                     onClick={() => inWatchlist ? removeFromWatchlist(selectedMedia.id) : addToWatchlist(selectedMedia)}
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.94 }}
-                    className="w-[40px] h-[40px] rounded-full flex items-center justify-center cursor-pointer transition-all shadow-md"
+                    className="!w-[40px] !h-[40px] !rounded-full"
                     style={{
-                      ...liquidGlassStyle,
-                      ...(inWatchlist ? { background: 'rgba(239,68,68,0.16)', borderColor: 'rgba(239,68,68,0.4)' } : {}),
+                      ...navbarMatchGlassStyle,
+                      backgroundColor: inWatchlist ? 'rgba(239, 68, 68, 0.16)' : 'rgba(13, 17, 23, 0.1)'
                     }}
                   >
                     <Bookmark size={15} className={inWatchlist ? 'fill-current text-red-400' : 'text-white'} />
-                  </motion.button>
+                  </GlassButton>
                 </div>
               )}
 

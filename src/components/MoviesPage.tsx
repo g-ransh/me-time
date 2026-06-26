@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ChevronDown, Play, Plus, Check, Info } from 'lucide-react';
 import { getPopularMovies, getTopRatedMovies, getNowPlaying, getUpcomingMovies, getBackdropUrl, getMovieDetails } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
+import { GlassButton } from './ui/GlassButton';
 
 const TABS = [
   { id: 'popular', label: 'Popular' },
@@ -20,7 +21,6 @@ const MoviesPage: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic tracking variables to hold logo strings extracted from the secondary append layer
   const [currentLogoPath, setCurrentLogoPath] = useState<string | null>(null);
 
   const { 
@@ -47,7 +47,6 @@ const MoviesPage: React.FC = () => {
 
   const currentMovie = movies[deckIndex];
 
-  // Secondary sub-effect resolution layer fetching full asset arrays to parse network logos matching HeroBanner styles
   useEffect(() => {
     if (!currentMovie) return;
     setCurrentLogoPath(null);
@@ -83,19 +82,22 @@ const MoviesPage: React.FC = () => {
 
   const activeTabLabel = TABS.find(t => t.id === activeTab)?.label || 'Select';
 
-  // Uniform translucent liquid glass style dictionary
-  const liquidGlassStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    backdropFilter: 'blur(24px) saturate(140%)',
-    WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+  // Configured to exactly 5% dark overlay tint (0.05 opacity) with a borderless crystal glass setup
+  const navbarMatchGlassStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(13, 17, 23, 0.05)',
+    backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    border: 'none',
+    boxShadow: '0 4px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   };
+
+  const globalDropdownGlassClass = "absolute top-full mt-[0.618rem] rounded-[0.618rem] p-[0.618rem] z-50 overflow-hidden";
 
   return (
     <div 
       className="h-screen w-full bg-[#020204] text-white relative select-none flex flex-col justify-between overflow-hidden animate-fade-in"
       style={{ 
-        fontFamily: 'Helvetica, Arial, sans-serif',
+        fontFamily: 'Arial, sans-serif',
         paddingTop: '4.236rem',
         paddingBottom: '4.236rem'
       }}
@@ -121,54 +123,51 @@ const MoviesPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Main Layout Wrapper matching Card alignment constraints ── */}
+      {/* ── Main Layout Wrapper ── */}
       <div className="w-full max-w-[1360px] mx-auto px-4 flex-1 flex flex-col justify-between min-h-0 relative z-10">
         
         {/* ── Page Header Controls Row ── */}
         <div className="w-full flex items-center justify-between mb-4 relative z-50 shrink-0 px-16">
-          <h1 
-            className="text-[36px] md:text-[40px] font-bold tracking-tight text-white/95 text-left shrink-0"
-            style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
-          >
-            Movies
-          </h1>
 
           <div className="relative" ref={dropdownRef}>
-            <button
+            <GlassButton
+              variant="text"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
-              className="px-6 py-3 rounded-[0.618rem] font-bold text-sm tracking-wide text-white hover:bg-white/10 transition-all flex items-center gap-3 cursor-pointer min-w-[210px] justify-between transform active:scale-98"
+              style={{ padding: '0.618rem 1rem', ...navbarMatchGlassStyle }}
+              className="flex items-center text-xs font-medium !rounded-[0.618rem] text-white min-w-[150px] justify-between"
             >
               <span>{activeTabLabel}</span>
-              <ChevronDown size={16} className={`transform transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
+              <ChevronDown size={12} className="opacity-40 ml-[0.382rem]" />
+            </GlassButton>
 
             <AnimatePresence>
               {isDropdownOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 4, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-                  style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
-                  className="absolute right-0 top-full overflow-hidden rounded-[0.618rem] bg-[#07070a]/95 w-[210px] z-50"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  style={navbarMatchGlassStyle}
+                  className={`${globalDropdownGlassClass} right-0 w-[12.36rem]`}
                 >
-                  <div className="p-1.5 flex flex-col gap-0.5">
-                    {TABS.map(tab => {
+                  <div className="flex flex-col gap-0.5">
+                    {TABS.map((tab) => {
                       const isActive = activeTab === tab.id;
                       return (
-                        <button
+                        <GlassButton
                           key={tab.id}
+                          variant="text"
                           onClick={() => { 
                             setActiveTab(tab.id); 
                             setIsDropdownOpen(false); 
                           }}
-                          className={`px-4 py-2.5 rounded-md text-xs font-semibold transition-all flex items-center gap-2 w-full text-left cursor-pointer ${
-                            isActive ? 'text-black bg-white font-bold' : 'text-white/60 hover:text-white hover:bg-white/5'
-                          }`}
+                          className={`w-full justify-between items-center !rounded-[0.382rem] text-xs font-medium !bg-transparent transition-all duration-200 ${
+                            isActive ? '!text-white' : '!text-white/50'
+                          } hover:!bg-white/10 hover:!text-white`}
+                          style={{ padding: '0.382rem 0.618rem', boxShadow: 'none', border: 'none' }}
                         >
                           <span>{tab.label}</span>
-                        </button>
+                          {isActive && <Check size={12} />}
+                        </GlassButton>
                       );
                     })}
                   </div>
@@ -181,16 +180,17 @@ const MoviesPage: React.FC = () => {
         {/* ── Main Stage Area ── */}
         <div className="w-full flex-1 flex items-center justify-between relative min-h-0">
           
-          {/* Left Flank Navigation Pill Button (Scaled to 50%) */}
+          {/* Left Flank Navigation Pill Button */}
           <div className="w-12 shrink-0 flex items-center justify-start z-30">
-            <button
+            <GlassButton
+              variant="icon"
               onClick={prevCard}
               disabled={deckIndex === 0 || isLoading}
-              style={liquidGlassStyle}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-0 disabled:pointer-events-none shadow-xl"
+              style={navbarMatchGlassStyle}
+              className="!w-10 !h-10 !rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all disabled:!opacity-0 disabled:!pointer-events-none"
             >
               <ChevronLeft size={18} />
-            </button>
+            </GlassButton>
           </div>
 
           {/* Center Frame Space */}
@@ -238,43 +238,42 @@ const MoviesPage: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Action Cluster Row (Pills Scaled to 50% with Helvetica rules applied) */}
+                    {/* Action Cluster Row */}
                     <div className="flex items-center gap-3">
-                      <button
+                      <GlassButton
+                        variant="text"
                         onClick={() => {
                           setPlayerMedia({ id: currentMovie.id, type: 'movie' });
                           setIsPlayerOpen(true);
                         }}
-                        style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
-                        className="h-[40px] px-5 rounded-full text-white font-bold text-sm tracking-wide flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95 cursor-pointer shadow-xl"
+                        style={navbarMatchGlassStyle}
+                        className="!h-[40px] !px-5 !rounded-full text-white font-medium text-sm tracking-wide"
                       >
-                        <Play size={14} className="fill-current text-white" />
+                        <Play size={14} className="fill-current text-white mr-2" />
                         <span>Play</span>
-                      </button>
+                      </GlassButton>
 
-                      <button
+                      <GlassButton
+                        variant="text"
                         onClick={() => {
                           setSelectedMedia(currentMovie);
                           setIsModalOpen(true);
                         }}
-                        style={{ ...liquidGlassStyle, fontFamily: 'Helvetica, Arial, sans-serif' }}
-                        className="h-[40px] px-4 rounded-full text-white font-bold text-sm tracking-wide flex items-center gap-2 hover:bg-white/10 transition-all active:scale-95 cursor-pointer shadow-xl"
+                        style={navbarMatchGlassStyle}
+                        className="!h-[40px] !px-4 !rounded-full text-white font-medium text-sm tracking-wide"
                       >
-                        <Info size={14} className="text-white" />
+                        <Info size={14} className="text-white mr-2" />
                         <span>Info</span>
-                      </button>
+                      </GlassButton>
 
-                      <button
+                      <GlassButton
+                        variant="icon"
                         onClick={() => isInWatchlist(currentMovie.id) ? removeFromWatchlist(currentMovie.id) : addToWatchlist(currentMovie)}
-                        style={{
-                          ...liquidGlassStyle,
-                          width: '40px',
-                          height: '40px'
-                        }}
-                        className="rounded-full flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer hover:bg-white/10 shadow-xl"
+                        style={navbarMatchGlassStyle}
+                        className="!w-[40px] !h-[40px] !rounded-full"
                       >
                         {isInWatchlist(currentMovie.id) ? <Check size={14} className="text-green-400" /> : <Plus size={14} />}
-                      </button>
+                      </GlassButton>
                     </div>
                   </div>
                 </motion.div>
@@ -282,16 +281,17 @@ const MoviesPage: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* Right Flank Navigation Pill Button (Scaled to 50%) */}
+          {/* Right Flank Navigation Pill Button */}
           <div className="w-12 shrink-0 flex items-center justify-end z-30">
-            <button
+            <GlassButton
+              variant="icon"
               onClick={nextCard}
               disabled={deckIndex === movies.length - 1 || movies.length === 0 || isLoading}
-              style={liquidGlassStyle}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 active:scale-90 transition-all cursor-pointer disabled:opacity-0 disabled:pointer-events-none shadow-xl"
+              style={navbarMatchGlassStyle}
+              className="!w-10 !h-10 !rounded-full flex items-center justify-center text-white/80 hover:text-white transition-all disabled:!opacity-0 disabled:!pointer-events-none"
             >
               <ChevronRight size={18} />
-            </button>
+            </GlassButton>
           </div>
 
         </div>

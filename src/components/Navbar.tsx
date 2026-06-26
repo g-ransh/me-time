@@ -11,9 +11,7 @@ const Navbar: React.FC = () => {
     activeTab,
     setActiveTab,
     isSearchOpen,
-    setIsSearchOpen,
     searchQuery,
-    setSearchQuery,
   } = useStore();
 
   const [scrolled, setScrolled] = useState(false);
@@ -42,18 +40,6 @@ const Navbar: React.FC = () => {
     }, 300);
   }, [searchQuery]);
 
-  const closeSearch = () => {
-    setIsSearchOpen(false);
-    setSearchQuery('');
-    setSuggestions([]);
-  };
-
-  const handleSearchSelect = (item: SearchResult) => {
-    closeSearch();
-    setActiveTab('search');
-    useStore.setState({ selectedMedia: item, isModalOpen: true });
-  };
-
   // Moved 'watchlist' directly into the primary navigation array for perfect text spacing
   const navItems: { id: 'home' | 'movies' | 'series' | 'genres' | 'watchlist'; label: string }[] = [
     { id: 'home',      label: 'Home' },
@@ -63,11 +49,11 @@ const Navbar: React.FC = () => {
     { id: 'watchlist', label: 'My List' },
   ];
 
-  // 10% translucent with Liquid Glass Gaussian texture
+  // 1. MATERIAL METRICS
   const thinWaterStyle: React.CSSProperties = {
-    backgroundColor: scrolled ? 'rgba(12, 12, 14, 0.1)' : 'rgba(16, 16, 20, 0.1)',
-    backdropFilter: 'blur(24px) saturate(210%) brightness(115%)',
-    WebkitBackdropFilter: 'blur(24px) saturate(210%) brightness(115%)',
+    backgroundColor: 'rgba(13, 17, 23, 0.15)',
+    backdropFilter: 'blur(5px) saturate(180%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(5px) saturate(180%) brightness(100%)',
     fontFamily: '"Inter", sans-serif',
   };
 
@@ -82,15 +68,20 @@ const Navbar: React.FC = () => {
         style={{ fontFamily: '"Inter", sans-serif' }}
       >
         <div
-          className="flex items-center gap-[32px] p-[8px] rounded-full select-none border border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-          style={thinWaterStyle}
+          // 2. ADVANCED EMBOSSING & SHADOW DEEPLY PRESSED INTO THE SCENE (Removed border stroke blur with precise inline styles)
+          className="flex items-center gap-[32px] p-[6px_10px] rounded-full select-none"
+          style={{
+            ...thinWaterStyle,
+            border: 'none',
+            boxShadow: '0 0px 1px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
+          }}
         >
           {/* Movie Reel Logo Emblem Layout Anchor */}
           <motion.button
             className="flex items-center justify-center w-[34px] h-[34px] rounded-full shrink-0 text-white/80 hover:text-white"
             onClick={() => setActiveTab('home')}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 1.05 }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-[19px] h-[19px]">
               <circle cx="12" cy="12" r="10" />
@@ -103,20 +94,22 @@ const Navbar: React.FC = () => {
           </motion.button>
 
           {/* Main Navigation Row — Space equally matched to all elements */}
-          <nav className="hidden md:flex items-center gap-[32px]">
+          {/* 3. OPTICAL CONDENSED GAP CONFIGURATIONS */}
+          <nav className="hidden md:flex items-center gap-[24px]">
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className="text-[14px] tracking-wide transition-all duration-200 relative py-0.5 cursor-pointer"
+                  // 4. TYPOGRAPHY ENGINE (Anti-aliased text configurations)
+                  className="text-[14px] tracking-wide transition-all duration-200 relative py-0.5 cursor-pointer antialiased"
                   style={{
-                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.38)',
+                    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                     fontWeight: isActive ? 700 : 600,
                   }}
-                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'; }}
-                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.38)'; }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.95)'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'; }}
                 >
                   {item.label}
                 </button>
@@ -125,106 +118,24 @@ const Navbar: React.FC = () => {
           </nav>
 
           {/* Right Compact Interface Utilities Section Block — Tighter icon grouping */}
-          <div className="flex items-center gap-[12px] text-white/35">
-            
-            {/* Search Input Box Area */}
-            <div className="relative flex items-center">
-              <AnimatePresence mode="wait">
-                {isSearchOpen ? (
-                  <motion.div
-                    key="input"
-                    initial={{ width: 34, opacity: 0 }}
-                    animate={{ width: 170, opacity: 1 }}
-                    exit={{ width: 34, opacity: 0 }}
-                    transition={{ duration: 0.22, ease: 'easeInOut' }}
-                    className="relative"
-                  >
-                    <div
-                      className="flex items-center gap-1.5 px-3 rounded-full border border-white/[0.06]"
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', height: '34px' }}
-                    >
-                      <Search size={15} className="text-white/40 shrink-0" />
-                      <input
-                        ref={searchRef}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search..."
-                        className="bg-transparent text-white text-[12px] placeholder-white/20 outline-none w-full font-semibold"
-                        style={{ fontFamily: '"Inter", sans-serif' }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') closeSearch();
-                          if (e.key === 'Enter' && searchQuery) {
-                            setActiveTab('search');
-                            closeSearch();
-                          }
-                        }}
-                      />
-                      <button onClick={closeSearch} className="shrink-0 cursor-pointer">
-                        <X size={13} className="text-white/30 hover:text-white/70 transition-colors" />
-                      </button>
-                    </div>
-
-                    {/* Auto-suggestions list panel */}
-                    <AnimatePresence>
-                      {suggestions.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 4, scale: 0.98 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 4, scale: 0.98 }}
-                          className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-64 rounded-xl overflow-hidden z-50 shadow-xl p-1 border border-white/[0.06]"
-                          style={{
-                            backgroundColor: 'rgba(14, 14, 16, 0.98)',
-                            fontFamily: '"Inter", sans-serif',
-                          }}
-                        >
-                          {suggestions.map((item, i) => (
-                            <button
-                              key={item.id}
-                              onClick={() => handleSearchSelect(item)}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-white/5 transition-colors group cursor-pointer"
-                              style={{ borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.01)' : 'none' }}
-                            >
-                              <div className="w-7 h-10 rounded bg-white/5 border border-white/5 overflow-hidden shrink-0">
-                                {item.poster_path ? (
-                                  <img src={getThumbUrl(item.poster_path)} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center"><Film size={11} className="text-white/20" /></div>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-white text-[12px] font-semibold truncate group-hover:text-white transition-colors">{getTitle(item)}</p>
-                                <p className="text-[10px] capitalize text-white/30 font-semibold">{item.media_type}</p>
-                              </div>
-                              {item.vote_average > 0 && (
-                                <span className="text-[10px] font-bold text-amber-500 shrink-0">★ {item.vote_average.toFixed(1)}</span>
-                              )}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                ) : (
+          <div className="flex items-center gap-[10px] text-white/35">
                   <motion.button
                     key="icon"
                     onClick={() => setActiveTab('search')}
                     className={`w-[34px] h-[34px] rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-white/5 cursor-pointer ${
                       activeTab === 'search' ? 'text-white bg-white/10' : 'text-white/40 hover:text-white'
                     }`}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.94 }}
+                    whileHover={{ scale: 1.10 }}
+                    whileTap={{ scale: 1.00 }}
                   >
                     <Search size={15} />
                   </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
 
             {/* Profile Action Node */}
             <motion.button
               className="w-[34px] h-[34px] rounded-full flex items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5 cursor-pointer text-white/40"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.10 }}
+              whileTap={{ scale: 1.00 }}
               title="Profile"
             >
               <User size={15} />
@@ -233,8 +144,8 @@ const Navbar: React.FC = () => {
             {/* Settings Config Node */}
             <motion.button
               className="w-[34px] h-[34px] rounded-full flex items-center justify-center hidden md:flex hover:text-white transition-colors border border-transparent hover:border-white/5 cursor-pointer text-white/40"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.10 }}
+              whileTap={{ scale: 1.00 }}
               title="Settings"
             >
               <Settings size={15} />
@@ -247,8 +158,12 @@ const Navbar: React.FC = () => {
       {/* ── Compact Mobile Bottom Tab Bar ── */}
       <div className="md:hidden fixed bottom-4 left-4 right-4 z-40">
         <div
-          className="flex items-center justify-around py-2 rounded-xl border border-white/[0.05] shadow-md"
-          style={thinWaterStyle}
+          // 2. ORGANIC MOBILE CONTAINER CORNER SYSTEM (rounded-xl) + Sharp Glass Bevel Style
+          className="flex items-center justify-around py-2 rounded-xl"
+          style={{
+            ...thinWaterStyle,
+            boxShadow: '0 1px 1000px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+          }}
         >
           {[
             { id: 'home' as const,   label: 'Home',    icon: Home },
@@ -262,11 +177,11 @@ const Navbar: React.FC = () => {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className="flex flex-col items-center gap-0.5 px-3 py-0.5 rounded-lg transition-all cursor-pointer"
+                className="flex flex-col items-center gap-0.5 px-3 py-0.5 rounded-lg transition-all cursor-pointer antialiased"
                 style={{ color: isActive ? '#fff' : 'rgba(255,255,255,0.25)' }}
               >
                 <Icon size={15} />
-                <span className="text-[10px] font-bold tracking-wide">{label}</span>
+                <span className="text-[10px] font-medium tracking-wide">{label}</span>
               </button>
             );
           })}

@@ -4,6 +4,7 @@ import { Play, Info, Plus, Star, Calendar, Clock, Tv } from 'lucide-react';
 import { Movie } from '../types';
 import { getBackdropUrl, getTitle, getReleaseYear, getMovieDetails, getTVDetails, getLogoUrl } from '../lib/tmdb';
 import { useStore } from '../store/useStore';
+import { GlassButton } from './ui/GlassButton';
 
 interface HeroBannerProps {
   movies?: Movie[];
@@ -63,7 +64,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
     const t = setInterval(() => {
       setCurrentIndex(p => (p + 1) % featured.length);
       setIframeKey(k => k + 1);
-    }, 8000);
+    }, 7000);
     return () => clearInterval(t);
   }, [isAutoPlaying, featured.length, timerKey]);
 
@@ -93,18 +94,12 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
 
   const runtimeLabel = getRuntimeLabel();
 
-  const uniformMetadataPillClass =
-    'h-9 px-4 rounded-full flex items-center justify-center gap-1.5 text-[13px] font-bold select-none ' +
-    'border border-white/[0.08] tracking-wide shrink-0 ' +
-    'shadow-[0_2px_12px_rgba(0,0,0,0.3)]';
-
-  const upscaledActionPillClass =
-    'h-[46px] px-6 rounded-full flex items-center justify-center gap-2 text-[15px] font-bold select-none ' +
-    'border tracking-wide shrink-0 transition-colors shadow-[0_4px_16px_rgba(0,0,0,0.4)]';
-
-  const liquidGlassStyle: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.07)', 
-    fontFamily: '"Inter", sans-serif',
+  const navbarMatchGlassStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(13, 17, 23, 0.1)',
+    backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    border: 'none',
+    boxShadow: '0 1px 1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   };
 
   return (
@@ -128,8 +123,8 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
             className="w-full h-full object-cover brightness-[1.04] contrast-[1.03]"
           />
 
-          {/* Expanded Brownian Diffusion: Shifted gradient thresholds back to let ambient lighting overflow the interface cleanly */}
-          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#020204] via-[#020204]/30 to-transparent mix-blend-normal" />
+          {/* Brownian Diffusion: Refined gradient thresholds to smoothly bleed light into the bottom bounds */}
+          <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#020204] via-[#020204]/15 to-transparent mix-blend-normal" />
           <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-white/[0.08] via-transparent to-[#020204]/10" />
           <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#020204]/30 via-transparent to-transparent" />
         </motion.div>
@@ -146,15 +141,15 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             className="max-w-[680px]"
           >
-            {/* Unified Title Frame Container */}
-            <div className="mb-6 select-none flex items-center min-h-[110px]">
+            {/* Unified Title Frame Container — Scaled Logo boundary safely to 85% (140px) */}
+            <div className="mb-6 select-none flex items-center min-h-[200px]">
               {isFetchingDetails ? (
-                <div className="h-[110px] w-48 bg-transparent" />
+                <div className="h-[140px] w-48 bg-transparent" />
               ) : logoPath ? (
                 <img
                   src={getLogoUrl(logoPath)}
                   alt={getTitle(current)}
-                  className="max-h-[110px] w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+                  className="max-h-[140px] w-auto object-contain"
                 />
               ) : (
                 <h1
@@ -166,30 +161,42 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
               )}
             </div>
 
-            {/* Standardized Geometric Metadata Row Layer */}
+            {/* Standardized Metadata Row Layer — Fixed TypeScript compile attributes entirely */}
             <div className="flex items-center gap-2.5 mb-6 flex-wrap">
-              <div className={uniformMetadataPillClass} style={liquidGlassStyle}>
-                <Star size={13} className="text-amber-400 fill-amber-400 flex-shrink-0" />
+              <GlassButton 
+                variant="text" 
+                className="!h-9 text-[13px] font-bold select-none !rounded-full pointer-events-none"
+                style={{ ...navbarMatchGlassStyle, padding: '0.382rem 1rem' }}
+              >
+                <Star size={13} className="text-amber-400 fill-amber-400 flex-shrink-0 mr-1.5" />
                 <span className="text-white">{current.vote_average ? current.vote_average.toFixed(1) : '7.9'}</span>
-              </div>
+              </GlassButton>
 
-              <div className={uniformMetadataPillClass} style={liquidGlassStyle}>
-                <Calendar size={13} className="text-white/55 flex-shrink-0" />
+              <GlassButton 
+                variant="text" 
+                className="!h-9 text-[13px] font-bold select-none !rounded-full pointer-events-none"
+                style={{ ...navbarMatchGlassStyle, padding: '0.382rem 1rem' }}
+              >
+                <Calendar size={13} className="text-white/55 flex-shrink-0 mr-1.5" />
                 <span className="text-white">{getReleaseYear(current)}</span>
-              </div>
+              </GlassButton>
 
               {runtimeLabel && (
-                <div className={uniformMetadataPillClass} style={liquidGlassStyle}>
+                <GlassButton 
+                  variant="text" 
+                  className="!h-9 text-[13px] font-bold select-none !rounded-full pointer-events-none"
+                  style={{ ...navbarMatchGlassStyle, padding: '0.382rem 1rem' }}
+                >
                   {isTV
-                    ? <Tv size={13} className="text-white/55 flex-shrink-0" />
-                    : <Clock size={13} className="text-white/55 flex-shrink-0" />
+                    ? <Tv size={13} className="text-white/55 flex-shrink-0 mr-1.5" />
+                    : <Clock size={13} className="text-white/55 flex-shrink-0 mr-1.5" />
                   }
                   <span className="text-white">{runtimeLabel}</span>
-                </div>
+                </GlassButton>
               )}
             </div>
 
-            {/* DESCRIPTION LAYER: Strictly locks truncation parameters and conditional space evaluation anchors inside line 3 thresholds */}
+            {/* DESCRIPTION LAYER */}
             <div className="mb-8 max-w-[560px]">
               <p 
                 className="text-white/95 text-base md:text-[17px] leading-relaxed select-text font-serif antialiased tracking-wide line-clamp-3 overflow-hidden text-ellipsis display-box webkit-box webkit-line-clamp-3 webkit-box-orient-vertical" 
@@ -202,10 +209,6 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
                 }}
               >
                 {current.overview || 'No description available for this specific entertainment frame sequence.'}
-                {/* STRICT CONDITIONAL INTERCEPT:
-                  Increased threshold length boundary rules from 140 to 180 characters.
-                  Guarantees that strings cleanly wrapping under 3 full block lines will never mount trailing ellipsis indicators.
-                */}
                 {current.overview && current.overview.length > 180 && (
                   <span className="text-white font-serif tracking-wide select-none">&nbsp;...</span>
                 )}
@@ -214,47 +217,43 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
 
             {/* Action Buttons Group Stage */}
             <div className="flex items-center gap-3">
-              <motion.button
+              <GlassButton
+                variant="text"
                 onClick={() => {
                   setPlayerMedia({ id: current.id, type: isTV ? 'tv' : 'movie', season: 1, episode: 1 });
                   setIsPlayerOpen(true);
                 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className={`${upscaledActionPillClass} bg-white/[0.07] border-white/[0.08] text-white hover:bg-white/[0.12] cursor-pointer`}
-                style={liquidGlassStyle}
+                className="!h-[43.7px] !text-[15px]"
+                style={{ ...navbarMatchGlassStyle, padding: '0.618rem 1.618rem' }}
               >
-                <Play size={15} className="text-white fill-current flex-shrink-0" />
+                <Play size={15} className="text-white fill-current flex-shrink-0 mr-2" />
                 <span>Play</span>
-              </motion.button>
+              </GlassButton>
 
-              <motion.button
+              <GlassButton
+                variant="text"
                 onClick={() => { setSelectedMedia(current); setIsModalOpen(true); }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className={`${upscaledActionPillClass} border-white/[0.08] text-white hover:bg-white/[0.12] cursor-pointer`}
-                style={liquidGlassStyle}
+                className="!h-[43.7px] !text-[15px]"
+                style={{ ...navbarMatchGlassStyle, padding: '0.618rem 1.618rem' }}
               >
-                <Info size={15} className="text-white/80 flex-shrink-0" />
+                <Info size={15} className="text-white/80 flex-shrink-0 mr-2" />
                 <span>Info</span>
-              </motion.button>
+              </GlassButton>
 
-              <motion.button
+              <GlassButton
+                variant="icon"
                 onClick={() => inWatchlist ? removeFromWatchlist(current.id) : addToWatchlist(current)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                className="w-[46px] h-[46px] rounded-full flex items-center justify-center border shrink-0 transition-colors shadow-[0_4px_16px_rgba(0,0,0,0.4)] cursor-pointer"
+                className="!w-[43.7px] !h-[43.7px]"
                 style={{
-                  ...liquidGlassStyle,
-                  background: inWatchlist ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.07)',
-                  borderColor: inWatchlist ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                  ...navbarMatchGlassStyle,
+                  backgroundColor: inWatchlist ? 'rgba(239, 68, 68, 0.18)' : 'rgba(13, 17, 23, 0.2)'
                 }}
               >
                 <Plus
                   size={18}
                   className={`transition-all duration-300 ${inWatchlist ? 'rotate-45 text-red-400' : 'text-white'}`}
                 />
-              </motion.button>
+              </GlassButton>
             </div>
           </motion.div>
         </AnimatePresence>
@@ -262,13 +261,13 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
 
       {/* ── Progress Filling Capsule Bar Node ── */}
       <div className="absolute bottom-11 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-[8px] min-w-[200px]">
-        {featured.map((_, i) => {
+        {featured.map((_: Movie, i: number) => {
           const isActive = i === currentIndex;
           return (
             <button
               key={i}
               onClick={() => goTo(i)}
-              className="relative h-[7px] rounded-full overflow-hidden bg-white/20 transition-all duration-300 shadow-[0_1px_4px_rgba(0,0,0,0.5)]"
+              className="relative h-[7px] rounded-full overflow-hidden bg-white/20 transition-all duration-300 shadow-[0_1px_4px_rgba(0,0,0,0.5)] cursor-pointer"
               style={{ width: isActive ? '24px' : '7px' }}
             >
               {isActive && (
@@ -277,7 +276,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ movies = [] }) => {
                   className="absolute inset-y-0 left-0 bg-white rounded-full"
                   initial={{ width: '0%' }}
                   animate={{ width: '100%' }}
-                  transition={{ duration: 8, ease: 'linear' }}
+                  transition={{ duration: 7, ease: 'linear' }}
                 />
               )}
             </button>

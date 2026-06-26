@@ -1,1 +1,8 @@
-node_modules
+# Secrets and Environment Files
+.env
+.env.local
+.env.production
+
+# Dependency and Build directories
+node_modules/
+dist/

@@ -69,6 +69,25 @@ const VideoPlayer: React.FC = () => {
     return currentProvider.buildUrl(playerMedia.id, playerMedia.type, season, episode);
   }, [playerMedia, currentProvider, season, episode]);
 
+  // Unified Architecture Theme Tokens (Matching Ultra-Premium Media Modals)
+  const crystalGlassStyle = {
+    backgroundColor: 'rgba(10, 10, 14, 0.1)',
+    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.01) 100%)',
+    backdropFilter: 'blur(5px) saturate(170%) brightness(115%)',
+    WebkitBackdropFilter: 'blur(5px) saturate(170%) brightness(115%)',
+    border: 'none',
+    boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.15)',
+  };
+
+  const containerPanelStyle = {
+    backgroundColor: 'rgba(10, 10, 14, 0.2)',
+    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%)',
+    backdropFilter: 'blur(5px) saturate(180%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(5px) saturate(180%) brightness(100%)',
+    border: 'none',
+    boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
+  };
+
   // ── LOCAL STORAGE PERSISTENCE ENGINE ──
   useEffect(() => {
     if (!isPlayerOpen || !playerMedia) return;
@@ -212,42 +231,49 @@ const VideoPlayer: React.FC = () => {
         >
           {/* ── TOP BAR CONTROL ROW ── */}
           <div
-            className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between gap-4 px-6 pt-6 pb-16 pointer-events-none"
-            style={{ background: 'linear-gradient(to bottom, rgba(4,4,6,0.95) 0%, rgba(4,4,6,0.4) 60%, transparent 100%)' }}
+            className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between gap-[26px] px-6 pt-6 pb-[42px] pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, rgba(4,4,6,0.96) 0%, rgba(4,4,6,0.38) 61.8%, transparent 100%)' }}
           >
-            <div className="flex items-center gap-4 min-w-0 flex-1 pointer-events-auto">
-              <button
+            <div className="flex items-center gap-[16px] min-w-0 flex-1 pointer-events-auto">
+              <motion.button
                 onClick={() => setIsPlayerOpen(false)}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white border border-white/5 bg-white/5 hover:bg-white/10 backdrop-blur-md transition-all cursor-pointer shrink-0"
+                className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer shrink-0"
+                style={crystalGlassStyle}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 <ArrowLeft size={16} />
-              </button>
+              </motion.button>
               <div className="min-w-0 text-left">
-                <p className="text-white/90 font-bold text-sm md:text-base tracking-tight truncate">
+                <p className="text-white/90 font-medium text-sm md:text-base tracking-tight truncate">
                   {type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Feature Presentation'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 z-50 pointer-events-auto" ref={sourceMenuRef}>
+            <div className="flex items-center gap-[10px] z-50 pointer-events-auto" ref={sourceMenuRef}>
               {type === 'tv' && (
-                <button
+                <motion.button
                   onClick={(e) => { e.stopPropagation(); setPanelSeason(season); setIsPanelOpen(true); }}
-                  className="px-4 py-1.5 rounded-full text-xs font-bold text-white flex items-center border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer shadow-lg group"
-                  style={{ backdropFilter: 'blur(20px)', scale: 1.025 }}
+                  className="px-[21px] py-[13px] rounded-full text-xs font-medium text-white flex items-center transition-all cursor-pointer group"
+                  style={crystalGlassStyle}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   <span className="text-white/90 group-hover:text-white transition-colors">{`S${season} · E${episode}`}</span>
-                </button>
+                </motion.button>
               )}
 
               <div className="relative">
-                <button
+                <motion.button
                   onClick={() => setShowSourceMenu(s => !s)}
-                  className="flex items-center px-4 py-1.5 rounded-full text-xs font-bold text-white/80 hover:text-white border border-white/10 bg-white/5 hover:bg-white/10 transition-all cursor-pointer shadow-lg"
-                  style={{ backdropFilter: 'blur(20px)', scale: 1.025 }}
+                  className="flex items-center px-[21px] py-[13px] rounded-full text-xs font-medium text-white/80 hover:text-white transition-all cursor-pointer"
+                  style={crystalGlassStyle}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   <span>{currentProvider.name}</span>
-                </button>
+                </motion.button>
 
                 <AnimatePresence>
                   {showSourceMenu && (
@@ -255,19 +281,21 @@ const VideoPlayer: React.FC = () => {
                       initial={{ opacity: 0, scale: 0.95, y: -5 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                      className="absolute right-0 top-full mt-2 w-44 rounded-2xl overflow-hidden p-1.5 border border-white/10 shadow-2xl"
+                      className="absolute right-0 top-full mt-[10px] w-44 rounded-2xl overflow-hidden p-1.5 border shadow-2xl"
                       style={{ 
                         backgroundColor: 'rgba(12, 12, 16, 0.45)', 
-                        backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%)',
-                        backdropFilter: 'blur(30px) saturate(160%) brightness(110%)',
-                        WebkitBackdropFilter: 'blur(30px) saturate(160%) brightness(110%)'
+                        backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.05) 100%)',
+                        backdropFilter: 'blur(45px) saturate(180%) brightness(110%)',
+                        WebkitBackdropFilter: 'blur(45px) saturate(180%) brightness(110%)',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 35px 80px -20px rgba(0, 0, 0, 0.95), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
                       }}
                     >
                       {PROVIDERS.map((p, i) => (
                         <button
                           key={p.id}
                           onClick={() => { setProviderIndex(i); setShowSourceMenu(false); setLoadStatus('loading'); setIframeKey(k => k + 1); }}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-xl text-xs font-bold transition-all cursor-pointer ${i === providerIndex ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-xl text-xs font-medium transition-all cursor-pointer ${i === providerIndex ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                         >
                           <span>{p.name}</span>
                           <span className="text-[9px] opacity-20 font-medium uppercase">{p.label}</span>
@@ -289,7 +317,7 @@ const VideoPlayer: React.FC = () => {
                   className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#050508]"
                 >
                   <div className="text-center mb-6">
-                    <p className="text-white/90 font-bold text-base md:text-lg tracking-tight mb-1">
+                    <p className="text-white/90 font-medium text-base md:text-lg tracking-tight mb-1">
                       {type === 'tv' ? `Season ${season} · Episode ${episode}` : 'Loading Film Stream'}
                     </p>
                     <p className="text-white/30 text-xs tracking-wide">Securing network node via {currentProvider.name}...</p>
@@ -352,38 +380,50 @@ const VideoPlayer: React.FC = () => {
                 <motion.div
                   initial={{ scale: 0.97, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.97, opacity: 0, y: 20 }}
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-4xl h-[76vh] z-[101] rounded-3xl p-6 md:p-8 flex flex-col overflow-hidden text-left"
-                  style={{
-                    backgroundColor: 'rgba(10, 10, 14, 0.45)',
-                    backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%)',
-                    backdropFilter: 'blur(45px) saturate(180%) brightness(110%)',
-                    WebkitBackdropFilter: 'blur(45px) saturate(180%) brightness(110%)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    boxShadow: '0 35px 80px -20px rgba(0, 0, 0, 0.95), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)',
-                  }}
+                  style={containerPanelStyle}
                 >
                   <div className="flex items-center justify-between mb-5 shrink-0">
                     <div>
-                      <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Navigation Index</h3>
-                      <p className="text-base font-bold text-white tracking-tight">Select Season & Track</p>
+                      <h3 className="text-[16px] font-medium text-white/30">Navigation Index</h3>
+                      <p className="text-base font-medium text-white tracking-tight">Select Season & Track</p>
                     </div>
-                    <button onClick={() => setIsPanelOpen(false)} className="w-8 h-8 rounded-full bg-white/5 border border-white/5 hover:border-white/10 flex items-center justify-center text-white/60 hover:text-white cursor-pointer"><X size={14} /></button>
+                    <motion.button 
+                      onClick={() => setIsPanelOpen(false)} 
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white cursor-pointer transition-all"
+                      style={crystalGlassStyle}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <X size={14} />
+                    </motion.button>
                   </div>
 
-                  <div className="flex items-center gap-2 overflow-x-auto pb-4 border-b border-white/5 scrollbar-none shrink-0">
+                  {/* Season Selector Row - Redesigned into Premium Crystal Pills via Golden Ratio */}
+                  <div className="flex items-center gap-[10px] overflow-x-auto pb-4 border-b border-white/5 scrollbar-none shrink-0">
                     {Array.from({ length: totalSeasons }).map((_, idx) => {
                       const sNum = idx + 1;
                       const isTargetActive = panelSeason === sNum;
                       return (
-                        <button
-                          key={sNum} onClick={() => setPanelSeason(sNum)}
-                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${isTargetActive ? 'text-white bg-red-600 shadow-lg shadow-red-600/20' : 'text-white/40 border border-white/5 bg-white/[0.02] hover:text-white'}`}
+                        <motion.button
+                          key={sNum} 
+                          onClick={() => setPanelSeason(sNum)}
+                          className="px-[21px] py-[13px] rounded-full text-xs font-medium transition-all whitespace-nowrap cursor-pointer text-white flex items-center justify-center"
+                          style={{
+                            ...crystalGlassStyle,
+                            backgroundColor: isTargetActive ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255, 255, 255, 0.03)',
+                            borderColor: isTargetActive ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.1)',
+                            boxShadow: isTargetActive ? 'inset 0 1px 0 0 rgba(255, 255, 255, 0.2)' : '0 0px 0 rgba(0, 0, 0, 0.2)'
+                          }}
+                          whileHover={{ scale: 0.96 }}
+                          whileTap={{ scale: 1.04 }}
                         >
                           Season {sNum}
-                        </button>
+                        </motion.button>
                       );
                     })}
                   </div>
 
+                  {/* Episode Canvas List Grid Display */}
                   <div className="flex-1 overflow-y-auto mt-4 space-y-2.5 custom-scrollbar pr-1">
                     {panelLoading ? (
                       Array.from({ length: 4 }).map((_, idx) => (
@@ -391,27 +431,33 @@ const VideoPlayer: React.FC = () => {
                           <div className="w-24 h-full bg-white/5 rounded-lg" /><div className="flex-1 space-y-2"><div className="w-1/3 h-3 bg-white/5 rounded" /><div className="w-1/2 h-2 bg-white/5 rounded" /></div>
                         </div>
                       ))
-                    ) : episodes.map((ep, idx) => {
+                    ) : episodes.map((ep) => {
                       const isCurrent = season === panelSeason && episode === ep.episode_number;
                       return (
-                        <div
+                        <motion.div
                           key={ep.id}
                           onClick={() => { if (!playerMedia) return; setPlayerMedia({ ...playerMedia, season: panelSeason, episode: ep.episode_number }); setIsPanelOpen(false); setIframeKey(k => k + 1); }}
                           className="flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer select-none group"
-                          style={{ backgroundColor: isCurrent ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255, 255, 255, 0.01)', borderColor: isCurrent ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.04)' }}
+                          style={{ 
+                            backgroundColor: isCurrent ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.02)', 
+                            borderColor: isCurrent ? 'rgba(239, 68, 68, 0)' : 'rgba(255, 255, 255, 0)',
+                            backdropFilter: 'blur(10px) saturate(180%) brightness(100%)',
+                            WebkitBackdropFilter: 'blur(10px) saturate(180%) brightness(100%)'
+                          }}
+                          whileHover={{ x: 4, backgroundColor: isCurrent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.04)' }}
                         >
-                          <span className={`text-xs font-bold w-4 text-center ${isCurrent ? 'text-red-400' : 'text-white/20'}`}>{ep.episode_number}</span>
+                          <span className={`text-xs font-medium w-4 text-center ${isCurrent ? 'text-red-300' : 'text-white/20'}`}>{ep.episode_number}</span>
                           <div className="w-24 aspect-video rounded-lg overflow-hidden border border-white/5 bg-white/5 shrink-0">
-                            {ep.still_path ? <img src={`https://image.tmdb.org/t/p/w300${ep.still_path}`} alt="" className="w-full h-full object-cover opacity-60" /> : <div className="w-full h-full bg-neutral-900" />}
+                            {ep.still_path ? <img src={`https://image.tmdb.org/t/p/w300${ep.still_path}`} alt="" className="w-full h-full object-cover opacity-60 transition-opacity group-hover:opacity-80" /> : <div className="w-full h-full bg-neutral-900" />}
                           </div>
                           <div className="flex-1 min-w-0 text-left">
-                            <h4 className={`text-xs md:text-sm font-bold truncate ${isCurrent ? 'text-red-400' : 'text-white/90'}`}>{ep.name}</h4>
-                            <div className="flex items-center gap-2 mt-0.5 text-[10px] font-semibold text-white/30">
+                            <h4 className={`text-xs md:text-sm font-medium truncate ${isCurrent ? 'text-red-300' : 'text-white/90 group-hover:text-white'}`}>{ep.name}</h4>
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] font-medium text-white/30">
                               {ep.air_date && <span>{ep.air_date}</span>}
                               {ep.runtime && <span>• {ep.runtime}m</span>}
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>

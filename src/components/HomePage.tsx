@@ -3,6 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import HeroBanner from './HeroBanner';
 import MediaRow from './MediaRow';
 import { useStore } from '../store/useStore';
+import { GlassButton } from './ui/GlassButton';
 import {
   getTrending,
   getPopularMovies,
@@ -54,6 +55,15 @@ const PremiumFunctionalRow: React.FC<{ title: string; children: React.ReactNode 
     fontFamily: '"New York Medium", "New York", Georgia, Cambria, "Times New Roman", Times, serif'
   };
 
+  // Your locked style variable configuration tokens
+  const navbarMatchGlassStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(13, 17, 23, 0.1)',
+    backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    border: 'none',
+    boxShadow: '0 1px 1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  };
+
   return (
     <section className={`group relative ${LAYOUT_PADDING} ${MARGIN_STACK}`}>
       {/* Optimized Title: Smooth base opacity shift that illuminates dynamically on container hover */}
@@ -65,32 +75,36 @@ const PremiumFunctionalRow: React.FC<{ title: string; children: React.ReactNode 
       </h2>
 
       <div ref={containerRef} className="relative w-full">
-        {/* Left Floating Controller Switch - Deep backdrop-blur scattering and dynamic opacity scales */}
-        <button
+        {/* Left Floating Controller Switch — Fixed opacity collision parameters */}
+        <GlassButton
+          variant="icon"
           onClick={() => scrollRow('left')}
-          className="absolute left-[-22px] top-1/2 -translate-y-1/2 z-30 hidden md:flex items-center justify-center w-10 h-10 rounded-full border border-white/[0.03] bg-[#141415]/60 text-[#9b9b9b]/80 backdrop-blur-3xl opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 hover:bg-[#1a1a1c]/80 hover:text-white hover:border-white/10 active:scale-90 shadow-[0_12px_40px_rgba(0,0,0,0.6)] cursor-pointer"
+          className="absolute left-[-22px] top-1/2 -translate-y-1/2 z-30 !hidden md:!flex opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity duration-300 !w-10 !h-10 !rounded-full !bg-transparent text-[#9b9b9b]/80 hover:text-white"
+          style={navbarMatchGlassStyle}
           aria-label="Scroll Left"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-[15px] h-[15px]">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-        </button>
+        </GlassButton>
 
         {/* Media Container Track Layer */}
         <div className="w-full relative z-10">
           {children}
         </div>
 
-        {/* Right Floating Controller Switch - Deep backdrop-blur scattering and dynamic opacity scales */}
-        <button
+        {/* Right Floating Controller Switch — Fixed opacity collision parameters */}
+        <GlassButton
+          variant="icon"
           onClick={() => scrollRow('right')}
-          className="absolute right-[-22px] top-1/2 -translate-y-1/2 z-30 hidden md:flex items-center justify-center w-10 h-10 rounded-full border border-white/[0.03] bg-[#141415]/60 text-[#9b9b9b]/80 backdrop-blur-3xl opacity-0 scale-95 transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 hover:bg-[#1a1a1c]/80 hover:text-white hover:border-white/10 active:scale-90 shadow-[0_12px_40px_rgba(0,0,0,0.6)] cursor-pointer"
+          className="absolute right-[-22px] top-1/2 -translate-y-1/2 z-30 !hidden md:!flex opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition-opacity duration-300 !w-10 !h-10 !rounded-full !bg-transparent text-[#9b9b9b]/80 hover:text-white"
+          style={navbarMatchGlassStyle}
           aria-label="Scroll Right"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-[15px] h-[15px]">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
-        </button>
+        </GlassButton>
       </div>
     </section>
   );
@@ -119,7 +133,6 @@ const HomePage: React.FC = () => {
     const trendingResults = trendingQ.data?.results?.map((m: any) => ({ ...m, media_type: m.media_type || 'movie' })) || [];
     const heroMovies = trendingResults.filter((m: any) => m.backdrop_path);
     
-    // SAFE PARSING ENGINE: Fallbacks seamlessly if your history objects are flat or nested inside .movie
     const continueMovies = continueWatching.map(c => {
       const baseMovieData = c?.movie || c;
       return { 

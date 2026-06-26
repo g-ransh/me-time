@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Movie } from '../types';
 import MediaCard from './MediaCard';
+import { GlassButton } from './ui/GlassButton';
 
 interface MediaRowProps {
   title: string;
@@ -43,11 +44,20 @@ const MediaRow: React.FC<MediaRowProps> = ({
     handleScroll();
   }, [movies]);
 
+  // Locked style tokens inherited directly from your new embedded Navbar configuration specs
+  const navbarMatchGlassStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(13, 17, 23, 0.1)',
+    backdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    WebkitBackdropFilter: 'blur(4px) saturate(100%) brightness(100%)',
+    border: 'none',
+    boxShadow: '0 1px 1px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  };
+
   if (!movies || movies.length === 0) return null;
 
   return (
     <motion.section
-      className="relative w-full py-1" // <-- Changed from py-12 md:py-16 to py-1 to remove huge gap
+      className="relative w-full py-1"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       initial={{ opacity: 0 }}
@@ -56,39 +66,38 @@ const MediaRow: React.FC<MediaRowProps> = ({
     >
       {/* Row Header - Only render if a title is passed */}
       {title && (
-        <div className="flex items-center justify-between px-6 md:px-12 mb-2"> {/* <-- Changed mb-8 to mb-2 */}
+        <div className="flex items-center justify-between px-6 md:px-12 mb-2">
           <h2 className="text-lg md:text-[19px] font-semibold text-white/95 tracking-normal">
             {title}
           </h2>
           
-          {/* Navigation Arrows - Only visible on row hover */}
+          {/* Navigation Arrows - Upgraded to GlassButton primitive structures matching alignment layers */}
           <AnimatePresence>
             {isHovered && (
               <div className="hidden md:flex items-center gap-2">
-                <motion.button
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
+                <GlassButton
+                  variant="icon"
                   onClick={() => scroll('left')}
                   disabled={!canScrollLeft}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    canScrollLeft ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-transparent text-white/10 cursor-not-allowed'
+                  className={`!w-8 !h-8 !rounded-full flex items-center justify-center transition-all ${
+                    canScrollLeft ? 'text-white' : 'text-white/10 opacity-40 !cursor-not-allowed'
                   }`}
+                  style={navbarMatchGlassStyle}
                 >
                   <ChevronLeft size={16} />
-                </motion.button>
-                <motion.button
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
+                </GlassButton>
+                
+                <GlassButton
+                  variant="icon"
                   onClick={() => scroll('right')}
                   disabled={!canScrollRight}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    canScrollRight ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-transparent text-white/10 cursor-not-allowed'
+                  className={`!w-8 !h-8 !rounded-full flex items-center justify-center transition-all ${
+                    canScrollRight ? 'text-white' : 'text-white/10 opacity-40 !cursor-not-allowed'
                   }`}
+                  style={navbarMatchGlassStyle}
                 >
                   <ChevronRight size={16} />
-                </motion.button>
+                </GlassButton>
               </div>
             )}
           </AnimatePresence>
@@ -104,7 +113,7 @@ const MediaRow: React.FC<MediaRowProps> = ({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-4 md:gap-4 overflow-x-auto scrollbar-hide px-6 md:px-12 py-1" // <-- Tighter row gap
+          className="flex gap-4 overflow-x-auto scrollbar-hide px-6 md:px-12 py-1"
           style={{ scrollBehavior: 'smooth' }}
         >
           {movies.map((movie, i) => (

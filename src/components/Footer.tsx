@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
             onClick={() => setActiveTab('home')}
           >
             <span 
-              className="text-[21px] font-bold tracking-[-0.04em] text-[#f5f5f7] antialiased"
+              className="text-[21px] font-medium tracking-[-0.04em] text-[#f5f5f7] antialiased"
               style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
             >
               metime
@@ -58,7 +58,7 @@ const Footer: React.FC = () => {
         <div className="pt-6 text-center max-w-4xl mx-auto border-t border-white/[0.04]">
           <p 
             className="text-[#ababcc] font-normal leading-relaxed text-[11px] tracking-normal antialiased opacity-70"
-            style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+            style={{ fontFamily: 'Arial, sans-serif' }}
           >
             Disclaimer: metime does not host media files. All content is provided via
             third-party streaming embeds and the TMDB API. Legal inquiries regarding content must
